@@ -325,6 +325,28 @@ namespace utils
 	   return Total;
 	}
 
+
+
+  void getMCPileupDistributionFromMiniAOD(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup)
+  {
+    mcpileup.clear();
+    mcpileup.resize(Npu);
+    for(Long64_t ientry=0;ientry<ev.size();ientry++){
+      ev.to(ientry);
+      
+      fwlite::Handle< std::vector<PileupSummaryInfo> > puInfoH;
+      puInfoH.getByLabel(ev, "addPileupInfo");
+      if(!puInfoH.isValid()){printf("collection PileupSummaryInfos with name addPileupInfo does not exist\n"); exit(0);}
+      unsigned int ngenITpu = 0;
+      for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
+         if(it->getBunchCrossing()==0)      { ngenITpu += it->getPU_NumInteractions(); }
+      }
+      if(ngenITpu>=Npu){printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);}
+      mcpileup[ngenITpu]++;
+    }
+  }
+
+
   void getMCPileupDistribution(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup)
   {
     mcpileup.clear();
@@ -356,4 +378,49 @@ namespace utils
     PUNorm[1]/=NEvents;
     PUNorm[2]/=NEvents;
   }
+
+
+
+  bool passTriggerPatternsAndGetName(edm::TriggerResultsByName& tr, std::string& pathName, std::string pattern){
+     if(edm::is_glob(pattern)){
+        std::vector< std::vector<std::string>::const_iterator > matches = edm::regexMatch(tr.triggerNames(), pattern);
+        for(size_t t=0;t<matches.size();t++){
+           if(tr.accept( matches[t]->c_str() ) ){pathName = *matches[t]; return true;}
+        }
+     }else{
+        if(tr.accept( pattern.c_str() ) ) { pathName = pattern; return true;}
+     }
+     return false;
+  }
+
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern){
+     if(edm::is_glob(pattern)){
+        std::vector< std::vector<std::string>::const_iterator > matches = edm::regexMatch(tr.triggerNames(), pattern);
+        for(size_t t=0;t<matches.size();t++){
+           if(tr.accept( matches[t]->c_str() ) )return true;
+        }
+     }else{
+        if(tr.accept( pattern.c_str() ) ) return true;
+     }
+     return false;
+  }
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern1, std::string pattern2, std::string pattern3, std::string pattern4){
+     if(pattern1!="" && passTriggerPatterns(tr, pattern1))return true;
+     if(pattern2!="" && passTriggerPatterns(tr, pattern2))return true;
+     if(pattern3!="" && passTriggerPatterns(tr, pattern3))return true;
+     if(pattern4!="" && passTriggerPatterns(tr, pattern4))return true;
+     return false;
+  }
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::vector<std::string>& patterns){
+     for(size_t p=0;p<patterns.size();p++){
+        if(passTriggerPatterns(tr, patterns[p]))return true;
+     }
+     return false;
+  }
+
+
+
 }
