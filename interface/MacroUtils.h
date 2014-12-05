@@ -7,9 +7,16 @@
 #include "DataFormats/FWLite/interface/ChainEvent.h"
 #include "DataFormats/Common/interface/MergeableCounter.h"
 
+
+//Load here all the dataformat that we will need
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+
+
+
 #include "FWCore/FWLite/interface/AutoLibraryLoader.h"
 #include "FWCore/PythonParameterSet/interface/MakeParameterSets.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Utilities/interface/RegexMatch.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 
 
@@ -26,13 +33,20 @@
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
-#include "UserCode/llvv_fwk/interface/llvvObjects.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
+
+#include "DataFormats/PatCandidates/interface/GenericParticle.h"
+
 
 #include <vector>
 #include "TVector3.h"
 #include "TMath.h"
 #include "TGraph.h"
 #include <Math/VectorUtil.h>
+
+
+typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > LorentzVector;
+
 
 namespace utils
 {
@@ -76,7 +90,7 @@ namespace utils
 	mt-=TMath::Power(sum.pt(),2);
 	mt=TMath::Sqrt(mt);
       }else{
-	double dphi=fabs(deltaPhi(invisible.phi(),visible.phi()));
+	double dphi=fabs((double)deltaPhi((double)invisible.phi(),(double)visible.phi()));
 	mt=TMath::Sqrt(2*invisible.pt()*visible.pt()*(1-TMath::Cos(dphi)));
       }
       return mt;
@@ -92,7 +106,7 @@ namespace utils
 	mt-=TMath::Power(sum.pt(),2);
 	mt=TMath::Sqrt(mt);
       }else{
-	double dphi=fabs(deltaPhi(invisible.phi(),visible.phi()));
+	double dphi=fabs(deltaPhi((double)invisible.phi(),(double)visible.phi()));
 	mt=TMath::Sqrt(2*invisible.pt()*visible.pt()*(1-TMath::Cos(dphi)));
       }
       return mt;
@@ -106,7 +120,7 @@ namespace utils
     utils::cmssw::PuShifter_t getPUshifters(std::vector< float > &Lumi_distr, float puUnc);
 
     Float_t getEffectiveArea(int id, float eta,int cone=3,TString isoSum="");
-    double relIso(llvvLepton lep, double rho);
+//    double relIso(llvvLepton lep, double rho);
 
     // Single muon trigger efficiency 
     void getSingleMuTrigEff(const double&, const double&, double& );
@@ -122,27 +136,38 @@ namespace utils
   //clean up ROOT version of TeX
   void TLatexToTex(TString &expr);
 
-
+  inline float deltaPhi(float phi1, float phi2) { 
+     float result = phi1 - phi2;
+     while (result > float(M_PI)) result -= float(2*M_PI);
+     while (result <= -float(M_PI)) result += float(2*M_PI);
+     return result;
+  }
 
 // FWLITE CODE
 
   // loop on all the lumi blocks for an EDM file in order to count the number of events that are in a sample
   // this is useful to determine how to normalize the events (compute weight)
   unsigned long getMergeableCounterValue(const std::vector<std::string>& urls, std::string counter);
+  void getMCPileupDistributionFromMiniAOD(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup);
   void getMCPileupDistribution(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup);
   void getPileupNormalization(std::vector<float>& mcpileup, double* PUNorm, edm::LumiReWeighting* LumiWeights, utils::cmssw::PuShifter_t PuShifters);
+
+  bool passTriggerPatternsAndGetName(edm::TriggerResultsByName& tr, std::string& pathName, std::string pattern);
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern);
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern1, std::string pattern2, std::string pattern3="", std::string pattern4="");
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::vector<std::string>& patterns);
+
+  inline bool sort_CandidatesByPt(const pat::GenericParticle &a, const pat::GenericParticle &b)  { return a.pt()>b.pt(); }
 }
 
 // CODE FOR DUPLICATE EVENTS CHECKING
-namespace __gnu_cxx{
-  template<> struct hash< std::string >{
-    size_t operator()( const std::string& x ) const{ return hash< const char* >()( x.c_str() );  }
-  };
-}
+//  template<> struct hash< std::string >{
+//    size_t operator()( const std::string& x ) const{ return hash< const char* >()( x.c_str() );  }
+//  };
 
 class DuplicatesChecker{
  private :
-  typedef __gnu_cxx::hash_map<std::string, bool > RunEventHashMap;
+  typedef std::unordered_map<std::string, bool > RunEventHashMap;
   RunEventHashMap map;
  public :
   DuplicatesChecker(){}

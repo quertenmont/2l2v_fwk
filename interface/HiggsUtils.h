@@ -6,11 +6,17 @@
 
 #include "TGraph.h"
 #include "TF1.h"
+#include "TH1D.h"
+#include "TH1F.h"
+#include "TFile.h"
+#include "TMath.h"
 
 #include "Math/LorentzVector.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
 
-#include "UserCode/llvv_fwk/interface/DataEventSummaryHandler.h"
+typedef ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > LorentzVector;
+
 
 namespace higgs{
 
@@ -31,8 +37,9 @@ namespace higgs{
       inline int GetMode() { return mode_; }
 
       //classify event
-      TString GetCategory(data::PhysicsObjectCollection_t &jets, LorentzVector &boson);
-      
+
+      TString GetCategory(pat::JetCollection& jets, LorentzVector &boson);
+     
     private :
       int mode_;
     };
