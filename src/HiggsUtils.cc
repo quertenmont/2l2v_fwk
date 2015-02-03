@@ -1,6 +1,6 @@
 #include "UserCode/llvv_fwk/interface/HiggsUtils.h"
 #include "TGraphErrors.h"
-#include "HiggsAnalysis/CombinedLimit/interface/th1fmorph.h"
+//#include "HiggsAnalysis/CombinedLimit/interface/th1fmorph.h" //FIXME
 
 namespace higgs{
 
@@ -11,9 +11,7 @@ namespace higgs{
 
     EventCategory::~EventCategory() { }
     
-  
-    //
-    TString EventCategory::GetCategory(data::PhysicsObjectCollection_t &jets, LorentzVector &boson)
+    TString EventCategory::GetCategory(pat::JetCollection &jets, LorentzVector &boson)
     {
       //jet multiplicity
       int NJets(0);
@@ -25,7 +23,7 @@ namespace higgs{
       //VBF tag
       bool isVBF(false);
       if(NJets>=2){
-	LorentzVector VBFSyst = jets[0] + jets[1];
+	LorentzVector VBFSyst = jets[0].p4() + jets[1].p4();
 	double j1eta=jets[0].eta() ;
 	double j2eta=jets[1].eta();
 	double dEta = fabs(j1eta-j2eta);
@@ -88,17 +86,19 @@ namespace higgs{
 	
       return cat;
     }
+
+
     
     //
     double transverseMass(LorentzVector &visible, LorentzVector &invisible, bool assumeSameMass){
       if(assumeSameMass){
 	LorentzVector sum=visible+invisible;
-	double tMass = TMath::Power(TMath::Sqrt(TMath::Power(visible.pt(),2)+pow(visible.mass(),2))+TMath::Sqrt(TMath::Power(invisible.pt(),2)+pow(visible.mass(),2)),2);
-	tMass-=TMath::Power(sum.pt(),2);
-	return TMath::Sqrt(tMass);
+	double tMass = pow(sqrt(pow(visible.pt(),2)+pow(visible.mass(),2))+sqrt(pow(invisible.pt(),2)+pow(visible.mass(),2)),2);
+	tMass-=pow(sum.pt(),2);
+	return sqrt(tMass);
       }else{
 	double dphi=fabs(deltaPhi(invisible.phi(),visible.phi()));
-	return TMath::Sqrt(2*invisible.pt()*visible.pt()*(1-TMath::Cos(dphi)));
+	return sqrt(2*invisible.pt()*visible.pt()*(1-cos(dphi)));
       }
       return -1;
     }
@@ -193,7 +193,9 @@ namespace higgs{
                    hL->SetBinContent(i, valL);
                    hR->SetBinContent(i, valR);
                 }
-                TH1F* hC = th1fmorph("hC","hC", hL, hR, CsecondL, CsecondR, Csecond, 1.0, 0);
+//                TH1F* hC = th1fmorph("hC","hC", hL, hR, CsecondL, CsecondR, Csecond, 1.0, 0);
+                 TH1F* hC = hL; 
+                #pragma message ("Loic Warning: th1fmorph not defined in 7XY, code need to be fixed!")
 
                 TGraph* nrGrC = new TGraph(hC->GetXaxis()->GetNbins());
                 for(int i=0;i<hC->GetXaxis()->GetNbins();i++){
