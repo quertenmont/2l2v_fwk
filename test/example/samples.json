@@ -17,8 +17,8 @@
       "lcolor":1,
       "marker":1,
       "data":[
-        { "dtag":"MC13TeV_ZZ2l2nu"                             , "split":25, "xsec":13.7       , "br":[ 0.0280341 ]           , "dset":"/MinBias/amagitte-Crab_MiniAodSim_ZZ_2l2v_PHYS14_25_V1_FirstRun_Powheg_Pythia8-7d492cb64f2cdaff326f939f96e45c96/USER",  "dbsURL":"prod/phys03"},
-        { "dtag":"MC13TeV_ZZ2l2nu"                             , "split":25, "xsec":13.7       , "br":[ 0.0280341 ]           , "dset":"/MinBias/amagitte-Crab_MiniAodSim_ZZ_2l2v_PHYS14_25_V1_SecondRun_Powheg_Pythia8-7d492cb64f2cdaff326f939f96e45c96/USER",  "dbsURL":"prod/phys03"}
+        { "dtag":"MC13TeV_ZZ2l2nu"                             , "split":25, "xsec":6.85       , "br":[ 0.0280341 ]           , "dset":"/MinBias/amagitte-Crab_MiniAodSim_ZZ_2l2v_PHYS14_25_V1_FirstRun_Powheg_Pythia8-7d492cb64f2cdaff326f939f96e45c96/USER",  "dbsURL":"prod/phys03"},
+        { "dtag":"MC13TeV_ZZ2l2nu"                             , "split":25, "xsec":6.85       , "br":[ 0.0280341 ]           , "dset":"/MinBias/amagitte-Crab_MiniAodSim_ZZ_2l2v_PHYS14_25_V1_SecondRun_Powheg_Pythia8-7d492cb64f2cdaff326f939f96e45c96/USER",  "dbsURL":"prod/phys03"}
       ]
     },
     {
