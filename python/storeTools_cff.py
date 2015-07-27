@@ -3,6 +3,7 @@ import os,sys
 import getopt
 import commands
 import re
+import json
 
 def natural_sort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -32,7 +33,7 @@ def fillFromStore(dir,ffile=0,step=-1,generatePfn=True):
 
     elif(dir.find('/store/')==0):
         prefix='eoscms'
-        lscommand = 'cmsLs ' + dir + ' | grep root | awk \'{print $5}\''
+        lscommand = 'cmsLs -R ' + dir + ' | grep root | awk \'{print $5}\''
         lsouttmp = commands.getstatusoutput(lscommand)[1].split()
 
         #this is needed as cmsLs lists twice files staged from castor
@@ -49,7 +50,7 @@ def fillFromStore(dir,ffile=0,step=-1,generatePfn=True):
             if(basename.find('tree_')==0) : continue
             if(basename.find('histogram')==0): continue
             lsout.append(l)
-        print 'Discarded ' + str(nduplicate)  + ' files duplicated in cmsLs output'
+#        print 'Discarded ' + str(nduplicate)  + ' files duplicated in cmsLs output'
        
     elif(dir.find('.root')<0):
         prefix='file'
@@ -62,22 +63,22 @@ def fillFromStore(dir,ffile=0,step=-1,generatePfn=True):
         if(type(line) is not str ) : continue
         if(len(line)==0) : continue
         if(line.find('root')<0) : continue
+        if(ifile<ffile): continue
 
-        if(ifile>=ffile):
-            if( (step<0) or  (step>0 and ifile<ffile+step) ):
-                
-                sline=''
-                if(prefix=='eoscms') :
-                    if(generatePfn) : sline=commands.getstatusoutput('cmsPfn ' + line )[1]
-                    else            : sline=line
-                elif(prefix=='singlefile') :
-                    sline='file://' + line
-                else :
-                    sline=str(prefix+'://' + dir + '/' + line.split()[0])
-                    if(len(sline)==0): continue
+        if( (step<0) or  (step>0 and ifile<ffile+step) ):                
+            sline=''
+            if(prefix=='eoscms') :
+                if(generatePfn) : sline=commands.getstatusoutput('cmsPfn ' + line )[1]
+                else            : sline=line
+            elif(prefix=='singlefile') :
+                sline='file://' + line
+            else :
+                sline=str(prefix+'://' + dir + '/' + line.split()[0])
+                if(len(sline)==0): continue
+            sline = sline.replace('?svcClass=default', '')
 
-                localdataset.extend( [ sline ] )
-        ifile=ifile+1
+            localdataset.extend( [ sline ] )
+    ifile=ifile+1
 
     return natural_sort(localdataset)
 
@@ -197,3 +198,35 @@ def addPrefixSuffixToFileList(Prefix, fileList, Suffix):
       outList.append(Prefix+s+Suffix)
    return natural_sort(outList)
 
+
+
+
+
+
+
+def keepOnlyFilesFromGoodRun(fileList, jsonPath):
+   if(jsonPath == ''):return fileList
+
+   goodLumis = {}
+   jsonFile = open(jsonPath,'r')
+   runList=json.load(jsonFile,encoding='utf-8').items()
+   runList.sort()
+   for run in runList :
+      goodLumis[int(run[0])] = []
+      for lumi in run[1] : goodLumis[int(run[0])].append(lumi)
+
+   outFileList = []
+   for F in fileList:
+      #check if the file contains at least one good lumi section using DAS_CLIENT --> commented out because VERY SLOW!
+      #print 'das_client.py --limit=0 --query "lumi file='+f+' |  grep lumi.run_number,lumi.number"'      
+      #containsGoodLumi = False
+      #for run in commands.getstatusoutput('das_client.py --limit=0 --query "run file='+f+'"')[1].replace('[','').replace(']','').split(','):
+      #   if(not IsGoodRun(int(run))):continue
+      #   for lumi in commands.getstatusoutput('das_client.py --limit=0 --query "lumi file='+f+'"')[1].replace('[','').replace(']','').split(','):
+      #      if(IsGoodLumi(run, lumi)):return True
+
+      #FASTER technique only based on run number and file name parsing
+      Fsplit = F.split('/00000/')[0].split('/')
+      run = int(Fsplit[-2])*1000+int(Fsplit[-1])
+      if(run in goodLumis): outFileList.extend([F])
+   return outFileList

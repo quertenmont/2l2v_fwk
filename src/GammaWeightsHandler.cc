@@ -17,7 +17,7 @@ GammaWeightsHandler::GammaWeightsHandler(const edm::ParameterSet &runProcess,TSt
   TString massType( isMC ? "mczmass" : "zmass");
     
   //categories to consider, add more if needed but keep these ones 
-  TString cats[]   =  {"eq0jets","eq1jets","eq2jets","geq3jets","vbf","geq1jets","novbf","mjjq100","mjjq092","mjjq083","mjjq066","mjjq049","mjjq033","mjjq016"};
+  TString cats[]   =  {"eq0jets","geq1jets","eq2jets","geq3jets","vbf","geq1jets","novbf","mjjq100","mjjq092","mjjq083","mjjq066","mjjq049","mjjq033","mjjq016"};
   dilCats_.push_back("ee"); dilCats_.push_back("mumu");
   
   //retrieve from file
@@ -43,7 +43,6 @@ GammaWeightsHandler::GammaWeightsHandler(const edm::ParameterSet &runProcess,TSt
 		  TGraph *h = (TGraph *) fwgt->Get(hname);
 		  if(h) iwgts.push_back(h);
 		  
-	      
 		  //mass shape
 		  if(iw>0) continue;
 		  hname= key+"_"+massType;
@@ -74,19 +73,6 @@ LorentzVector GammaWeightsHandler::getMassiveP4(LorentzVector &gamma,TString evC
       if(zmassH_[evCategoryLabel]->Integral())
 	while(fabs(mass-91)>15) 
 	  mass = zmassH_[evCategoryLabel]->GetRandom();
-    }
-  return LorentzVector(gamma.px(),gamma.py(),gamma.pz(),sqrt(pow(mass,2)+pow(gamma.energy(),2)));
-}
-
-LorentzVector GammaWeightsHandler::getMassiveP4(LorentzVectorF &gamma,TString evCategoryLabel)
-{
-  //generate a mass from the line shape (0 if not available)
-  float mass(0);
-  if(zmassH_.find(evCategoryLabel)!=zmassH_.end())
-    {
-      if(zmassH_[evCategoryLabel]->Integral())
-        while(fabs(mass-91)>15)
-          mass = zmassH_[evCategoryLabel]->GetRandom();
     }
   return LorentzVector(gamma.px(),gamma.py(),gamma.pz(),sqrt(pow(mass,2)+pow(gamma.energy(),2)));
 }

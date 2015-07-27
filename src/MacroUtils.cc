@@ -152,58 +152,68 @@ namespace utils
     Float_t getEffectiveArea(int id,float eta,int cone,TString isoSum)
     {
       Float_t Aeff(1.0);
-      if(abs(id)==11)
-	{
-	  if(fabs(eta)<1.0)                         Aeff=(cone==3? 0.100 : 0.180);
-	  else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=(cone==3? 0.120 : 0.200);
-	  else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=(cone==3? 0.085 : 0.150);
-	  else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=(cone==3? 0.110 : 0.190);
-	  else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=(cone==3? 0.120 : 0.210);
-	  else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=(cone==3? 0.120 : 0.220);
-	  else Aeff=0.14;
-	}
-      else if(abs(id)==22){
+      if(abs(id)==11){ // electron 
+	// PHYS14  https://indico.cern.ch/event/367861/contribution/2/material/slides/0.pdf 
+	if(fabs(eta)<0.8)                         Aeff=(cone==3? 0.1013 : 0.180);
+	else if(fabs(eta)>0.8 && fabs(eta)<1.3)   Aeff=(cone==3? 0.0988 : 0.200);
+	else if(fabs(eta)>1.3 && fabs(eta)<2.0)   Aeff=(cone==3? 0.0572 : 0.150);
+	else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=(cone==3? 0.0842 : 0.190);
+	else if(fabs(eta)>2.2 && fabs(eta)<2.5)   Aeff=(cone==3? 0.1530 : 0.210);
+      }
+
+      else if(abs(id)==13){ // muon 
+	// PHYS14  https://indico.cern.ch/event/367861/contribution/2/material/slides/0.pdf 
+	if(fabs(eta)<0.8)                         Aeff=(cone==3? 0.0913 : 0.180);
+	else if(fabs(eta)>0.8 && fabs(eta)<1.3)   Aeff=(cone==3? 0.0765 : 0.200);
+	else if(fabs(eta)>1.3 && fabs(eta)<2.0)   Aeff=(cone==3? 0.0546 : 0.150);
+	else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=(cone==3? 0.0728 : 0.190);
+	else if(fabs(eta)>2.2 && fabs(eta)<2.5)   Aeff=(cone==3? 0.1177 : 0.210);
+      }
+      
+      else if(abs(id)==22){ // photon 
+	//https://twiki.cern.ch/twiki/bin/viewauth/CMS/CutBasedPhotonIdentificationRun2#Recipe_for_regular_users_for_74X
+	// Effective areas for the PHYS14, conditions: PU20 bx25 
 	if(isoSum=="chIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.012;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.010;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.014;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.012;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.016;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.020;
-          else                                      Aeff=0.012;
+	  if(fabs(eta)<1.0)                         Aeff=0.0234;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0189;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0171;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0129;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0110;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0074;
+          else                                      Aeff=0.0035;
 	}
 	if(isoSum=="nhIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.030;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.057;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.039;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.015;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.024;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.039;
-          else                                      Aeff=0.072;
+	  if(fabs(eta)<1.0)                         Aeff=0.0053;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0103;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0057;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0070;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0152;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0232;
+          else                                      Aeff=0.1709;
 	}
 	if(isoSum=="gIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.148;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.130;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.112;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.216;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.262;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.260;
-          else                                      Aeff=0.266;
+	  if(fabs(eta)<1.0)                         Aeff=0.0780;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0629;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0264;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0462;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0740;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0924;
+          else                                      Aeff=0.1484;
 	}
       }
       return Aeff;
     }
 
 
-   double relIso(llvvLepton lep, double rho){
-      if(abs(lep.id)==11){
-          return (TMath::Max(lep.nhIso03+lep.gIso03-rho*utils::cmssw::getEffectiveArea(11,lep.electronInfoRef->sceta),double(0.))+lep.chIso03)/lep.pt();
-      }else if(abs(lep.id)==13){
-          return (TMath::Max(lep.nhIso04+lep.gIso04-0.5*lep.puchIso04,double(0.))+lep.chIso04)/lep.pt();
-      }else{
-          return -1;
-      }
-   }
+//   double relIso(llvvLepton lep, double rho){
+//      if(abs(lep.id)==11){
+//          return (TMath::Max(lep.nhIso03+lep.gIso03-rho*utils::cmssw::getEffectiveArea(11,lep.electronInfoRef->sceta),double(0.))+lep.chIso03)/lep.pt();
+//      }else if(abs(lep.id)==13){
+//          return (TMath::Max(lep.nhIso04+lep.gIso04-0.5*lep.puchIso04,double(0.))+lep.chIso04)/lep.pt();
+//      }else{
+//          return -1;
+//      }
+//   }
     
     
     void getSingleMuTrigEff(const double& pt, const double& abseta, double& muontriggerefficiency){
@@ -246,7 +256,10 @@ namespace utils
   {
     using namespace std;
 
+    bool ValueWasNull = false;
+
     if(value==0.0 && error==0.0)return string("");
+    if(value==0.0){value=error; ValueWasNull=true;}
     
     if(!doPowers){
       char tmpchar[255];
@@ -273,6 +286,9 @@ namespace utils
     }
     int ErrorFloating = ValueFloating;
     
+ 
+    if(ValueWasNull){value=0.0;}
+
     char tmpchar[255];
     if(power!=0){
       if(systError<0){
@@ -325,18 +341,22 @@ namespace utils
 	   return Total;
 	}
 
-  void getMCPileupDistribution(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup)
+
+
+  void getMCPileupDistributionFromMiniAOD(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup)
   {
     mcpileup.clear();
     mcpileup.resize(Npu);
     for(Long64_t ientry=0;ientry<ev.size();ientry++){
       ev.to(ientry);
       
-      fwlite::Handle< llvvGenEvent > genEventHandle;
-      genEventHandle.getByLabel(ev, "llvvObjectProducersUsed");
-//      if(!genEventHandle.isValid()){printf("llvvGenEvent Object NotFound\n");continue;}
-      if(!genEventHandle.isValid()){continue;} //remove the warning... CAREFULL!
-      unsigned int ngenITpu = (int)genEventHandle->ngenITpu;
+      fwlite::Handle< std::vector<PileupSummaryInfo> > puInfoH;
+      puInfoH.getByLabel(ev, "addPileupInfo");
+      if(!puInfoH.isValid()){printf("collection PileupSummaryInfos with name addPileupInfo does not exist\n"); exit(0);}
+      unsigned int ngenITpu = 0;
+      for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
+         if(it->getBunchCrossing()==0)      { ngenITpu += it->getPU_NumInteractions(); }
+      }
       if(ngenITpu>=Npu){printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);}
       mcpileup[ngenITpu]++;
     }
@@ -356,4 +376,49 @@ namespace utils
     PUNorm[1]/=NEvents;
     PUNorm[2]/=NEvents;
   }
+
+
+
+  bool passTriggerPatternsAndGetName(edm::TriggerResultsByName& tr, std::string& pathName, std::string pattern){
+     if(edm::is_glob(pattern)){
+        std::vector< std::vector<std::string>::const_iterator > matches = edm::regexMatch(tr.triggerNames(), pattern);
+        for(size_t t=0;t<matches.size();t++){
+           if(tr.accept( matches[t]->c_str() ) ){pathName = *matches[t]; return true;}
+        }
+     }else{
+        if(tr.accept( pattern.c_str() ) ) { pathName = pattern; return true;}
+     }
+     return false;
+  }
+
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern){
+     if(edm::is_glob(pattern)){
+        std::vector< std::vector<std::string>::const_iterator > matches = edm::regexMatch(tr.triggerNames(), pattern);
+        for(size_t t=0;t<matches.size();t++){
+           if(tr.accept( matches[t]->c_str() ) )return true;
+        }
+     }else{
+        if(tr.accept( pattern.c_str() ) ) return true;
+     }
+     return false;
+  }
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern1, std::string pattern2, std::string pattern3, std::string pattern4){
+     if(pattern1!="" && passTriggerPatterns(tr, pattern1))return true;
+     if(pattern2!="" && passTriggerPatterns(tr, pattern2))return true;
+     if(pattern3!="" && passTriggerPatterns(tr, pattern3))return true;
+     if(pattern4!="" && passTriggerPatterns(tr, pattern4))return true;
+     return false;
+  }
+
+  bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::vector<std::string>& patterns){
+     for(size_t p=0;p<patterns.size();p++){
+        if(passTriggerPatterns(tr, patterns[p]))return true;
+     }
+     return false;
+  }
+
+
+
 }
