@@ -469,7 +469,10 @@ int main(int argc, char* argv[])
 
 ///////////////////////////////////////////////
 
-
+  std::cout << "The size of AnalysisBins is: " << AnalysisBins.size() << std::endl;
+  //if( int t=0; t< AnalysisBins.size(); ++t){
+  //  std::cout << AnalysisBins.at(t) << std::endl;
+  //}
   //init the json wrapper
   JSONWrapper::Object Root(jsonFile.Data(), true);
 
@@ -1622,7 +1625,8 @@ void initializeTGraph(){
               //create an histogram containing all the MC backgrounds
               std::vector<string> toBeDelete;
               for(std::map<string, ProcessInfo_t>::iterator it=procs.begin(); it!=procs.end();it++){
-                 if(!it->second.isBckg || it->second.isData)continue;
+                  
+                 if(!it->second.isBckg || it->second.isData)continue; 
                  TString procName = it->first.c_str();
                  if(!( procName.Contains("t#bar{t}") || procName.Contains("Single top") || procName.Contains("WW") || procName.Contains("WW#rightarrow 2l2#nu") || procName.Contains("Z#rightarrow #tau#tau") || procName.Contains("W#rightarrow l#nu") ||  procName.Contains("Top") ||  procName.Contains("W,multijets") ))continue;
                  addProc(procInfo_NRB, it->second);
@@ -1634,7 +1638,6 @@ void initializeTGraph(){
 
               for(std::map<string, ChannelInfo_t>::iterator chData = dataProcIt->second.channels.begin(); chData!=dataProcIt->second.channels.end(); chData++){            
                  if(std::find(selCh.begin(), selCh.end(), chData->second.channel)==selCh.end())continue;
-
                  std::map<string, ChannelInfo_t>::iterator chNRB  = procInfo_NRB.channels.find(chData->first);  
                  if(chNRB==procInfo_NRB.channels.end()){  //this channel does not exist, create it
                     procInfo_NRB.channels[chData->first] = ChannelInfo_t();     
@@ -1642,10 +1645,7 @@ void initializeTGraph(){
                     chNRB->second.bin     = chData->second.bin;
                     chNRB->second.channel = chData->second.channel;
                  }
-   
-                 std::cout << "chData->first: " << chData->first << std::endl;
-                 std::cout << "(ctrlCh+chData->second.bin.c_str()).Data() => " << (ctrlCh+chData->second.bin.c_str()).Data() << std::endl;
-                 std::cout << "sideBandHisto.Data() => " << sideBandHisto.Data() << std::endl;
+      
                  //load data histogram in the control channel
                  TH1* hCtrl_SB = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[sideBandHisto.Data()].histo();
                  TH1* hCtrl_SI = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[mainHisto    .Data()].histo();
@@ -1655,44 +1655,45 @@ void initializeTGraph(){
                  //compute alpha
                  double alpha=0 ,alpha_err=0;
                  double alphaUsed=0 ,alphaUsed_err=0;
-                 if(hCtrl_SB->GetBinContent(5) == 0 ){ std::cout << "hCtrl_SB->GetBinContent(5) is zero!" << std::endl; }
-                 if(chData->second.channel.find("ee"  )==0 ){ std::cout << "chData->second.channel.find(ee)==0" << std::endl;} 
-                 if(chData->second.channel.find("mumu")==0 ){ std::cout << "chData->second.channel.find(mumu)==0" << std::endl;}
-                 std::cout << " " << std::endl;
-                 std::cout << "hCtrl_SB->GetBinContent(*)" << std::endl;
-                 std::cout << hCtrl_SB->GetBinContent(0) << "; " << hCtrl_SB->GetBinContent(1) << "; " << hCtrl_SB->GetBinContent(2) << "; " << hCtrl_SB->GetBinContent(3) << "; " << hCtrl_SB->GetBinContent(4) << "; " << hCtrl_SB->GetBinContent(5) << std::endl;
-                 std::cout << "hChan_SB->GetBinContent(*)" << std::endl;
-                 std::cout << hChan_SB->GetBinContent(0) << "; " << hChan_SB->GetBinContent(1) << "; " << hChan_SB->GetBinContent(2) << "; " <<  hChan_SB->GetBinContent(3) << "; " << hChan_SB->GetBinContent(4) << "; " << hChan_SB->GetBinContent(5) << std::endl;
-                 std::cout << " " << std::endl;
-                 if(hCtrl_SB->GetBinContent(5)>0){
-                    alpha     = hChan_SB->GetBinContent(5) / hCtrl_SB->GetBinContent(5);
-                    alpha_err = ( fabs( hChan_SB->GetBinContent(5) * hCtrl_SB->GetBinError(5) ) + fabs(hChan_SB->GetBinError(5) * hCtrl_SB->GetBinContent(5) )  ) / pow(hCtrl_SB->GetBinContent(5), 2);        
-                 }
-//                 if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.44; alphaUsed_err=0.03;}
-//                 if(chData->second.channel.find("mumu")==0){alphaUsed = 0.71; alphaUsed_err=0.04;}
-                 if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.47; alphaUsed_err=0.03;} //25/01/2014
-                 if(chData->second.channel.find("mumu")==0){alphaUsed = 0.61; alphaUsed_err=0.04;}
+ 
+                 //if(chData->second.channel.find("ee"  )==0 ){ std::cout << "chData->second.channel.find(ee)==0" << std::endl;} 
+                 //if(chData->second.channel.find("mumu")==0 ){ std::cout << "chData->second.channel.find(mumu)==0" << std::endl;}
 
+                 if(hCtrl_SB->GetBinContent(4)>0){
+                    alpha     = hChan_SB->GetBinContent(4) / hCtrl_SB->GetBinContent(4);
+                    alpha_err = ( fabs( hChan_SB->GetBinContent(4) * hCtrl_SB->GetBinError(4) ) + fabs(hChan_SB->GetBinError(4) * hCtrl_SB->GetBinContent(4) )  ) / pow(hCtrl_SB->GetBinContent(4), 2);        
+                 }
+
+                 //if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.44; alphaUsed_err=0.03;}
+                 //if(chData->second.channel.find("mumu")==0){alphaUsed = 0.71; alphaUsed_err=0.04;}
+                 //if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.47; alphaUsed_err=0.03;} //25/01/2014
+                 //if(chData->second.channel.find("mumu")==0){alphaUsed = 0.61; alphaUsed_err=0.04;}
+                 alphaUsed = alpha;
+                 alphaUsed_err = alpha_err;
 
                  double valDD, valDD_err;
                  double valMC, valMC_err;
+                 //compute the ee/mumu contribution in the preselection region from MC
                  valMC = hNRB->IntegralAndError(1,hNRB->GetXaxis()->GetNbins(),valMC_err);  if(valMC<1E-6){valMC=0.0; valMC_err=0.0;}
 
                  //for VBF stat in emu is too low, so take the shape from MC and scale it to the expected yield
                  if(chData->second.bin.find("vbf")==0){
                     hNRB->Scale(hCtrl_SI->Integral(1, hCtrl_SI->GetXaxis()->GetNbins()+1) / hNRB->Integral(1,hNRB->GetXaxis()->GetNbins()+1));
                  }else{
+                    //resent bin content, error..the hNRB is empty now
                     hNRB->Reset();
+                    //Add to hNRB the emu events inside the preselection region
                     hNRB->Add(hCtrl_SI , 1.0);
                  }
                  for(int bi=1;bi<=hNRB->GetXaxis()->GetNbins()+1;bi++){
-                    double val = hNRB->GetBinContent(bi);
+                    double val = hNRB->GetBinContent(bi); 
                     double err = hNRB->GetBinError(bi);
-                    double newval = val*alphaUsed;
+                    double newval = val*alphaUsed; 
                     double newerr = sqrt(pow(err*alphaUsed,2) + pow(val*alphaUsed_err,2));
                     hNRB->SetBinContent(bi, newval );
                     hNRB->SetBinError  (bi, newerr );
                  }
+
                  hNRB->Scale(DDRescale);
                  hNRB->SetTitle(NRBProcName.Data());
                  hNRB->SetFillStyle(1001);
@@ -1711,17 +1712,41 @@ void initializeTGraph(){
                  sprintf(Lalph2  , "%s%25s",Lalph2,  (string(" &") + utils::toLatexRounded(alphaUsed,alphaUsed_err)).c_str());
                  sprintf(Lyield  , "%s%25s",Lyield,  (string(" &") + utils::toLatexRounded(valDD,valDD_err,valDD*NonResonnantSyst)).c_str());
                  sprintf(LyieldMC, "%s%25s",LyieldMC,(string(" &") + utils::toLatexRounded(valMC,valMC_err)).c_str());
+
+                 //Alessio Changes
+                 /*std::ostringstream alphastr, alphastr_err;
+                 alphastr << alpha;
+                 alphastr_err << alpha_err;
+                 sprintf(Lalph1  , "%s%25s",Lalph1,  (" " + alphastr.str() + " " + alphastr_err.str()).c_str());
+                
+                 std::ostringstream alphaused, alphaused_err;
+                 alphaused << alphaUsed;
+                 alphaused_err << alphaUsed_err;
+                 sprintf(Lalph2  , "%s%25s",Lalph2,  (" " + alphaused.str() + " " + alphaused_err.str()).c_str());  
+               
+                 std::ostringstream vald, valderr, valderrNonRes;
+                 vald << valDD;
+                 valderr << valDD_err;
+                 valderrNonRes << valDD*NonResonnantSyst;
+                 sprintf(Lyield  , "%s%25s",Lyield,  (" " + vald.str() + " " + valderr.str() + " " + valderrNonRes.str()).c_str());
+                 
+                 std::ostringstream valmc, valmc_err;
+                 valmc << valMC;
+                 valmc_err << valMC_err;
+                 sprintf(LyieldMC, "%s%25s",LyieldMC,(" " + valmc.str() + " " + valmc_err.str()).c_str());*/
+
               }
 
               //recompute total background
               computeTotalBackground();
 
               if(pFile){
+
                  fprintf(pFile,"\\begin{table}[htp]\n\\begin{center}\n\\caption{Non resonant background estimation.}\n\\label{tab:table}\n");
                  fprintf(pFile,"\\begin{tabular}{%s|}\\hline\n", Lcol);
                  fprintf(pFile,"channel               %s\\\\\n", Lchan);
-                 fprintf(pFile,"$\\alpha$ measured    %s\\\\\n", Lalph1);
-                 fprintf(pFile,"$\\alpha$ used        %s\\\\\n", Lalph2);
+                 fprintf(pFile,"alpha measured    %s\\\\\n", Lalph1);
+                 fprintf(pFile,"alpha used        %s\\\\\n", Lalph2);
                  fprintf(pFile,"yield data            %s\\\\\n", Lyield);
                  fprintf(pFile,"yield mc              %s\\\\\n", LyieldMC);
                  fprintf(pFile,"\\hline\n");
