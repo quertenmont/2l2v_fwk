@@ -1745,8 +1745,8 @@ void initializeTGraph(){
                  fprintf(pFile,"\\begin{table}[htp]\n\\begin{center}\n\\caption{Non resonant background estimation.}\n\\label{tab:table}\n");
                  fprintf(pFile,"\\begin{tabular}{%s|}\\hline\n", Lcol);
                  fprintf(pFile,"channel               %s\\\\\n", Lchan);
-                 fprintf(pFile,"alpha measured    %s\\\\\n", Lalph1);
-                 fprintf(pFile,"alpha used        %s\\\\\n", Lalph2);
+                 fprintf(pFile,"$\\alpha$  measured    %s\\\\\n", Lalph1);
+                 fprintf(pFile,"$\\alpha$  used        %s\\\\\n", Lalph2);
                  fprintf(pFile,"yield data            %s\\\\\n", Lyield);
                  fprintf(pFile,"yield mc              %s\\\\\n", LyieldMC);
                  fprintf(pFile,"\\hline\n");
