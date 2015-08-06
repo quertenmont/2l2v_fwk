@@ -190,6 +190,7 @@ void GetListOfObject(JSONWrapper::Object& Root, std::string RootDir, std::list<N
                  char buf[255]; sprintf(buf,"_%i",s); string segmentExt = buf;
                  string FileName = RootDir + Samples[id].getString("dtag", "") +  Samples[id].getString("suffix","") + segmentExt + filtExt + ".root"; 
 	         TFile* File = new TFile(FileName.c_str());
+                 std::cout << "The File I am reading is: " << FileName.c_str() << std::endl;
                  bool& fileExist = FileExist[FileName];
                  if(!File || File->IsZombie() || !File->IsOpen() || File->TestBit(TFile::kRecovered) ){
                     fileExist=false;
@@ -200,7 +201,7 @@ void GetListOfObject(JSONWrapper::Object& Root, std::string RootDir, std::list<N
                  }
 
                  //do the following only for the first existing file
-                 if( counter_fileExist != 1 ) continue;
+                 //if( counter_fileExist != 1 ) continue;
 
                  printf("Adding all objects from %25s to the list of considered objects\n",  FileName.c_str());
 
@@ -220,7 +221,7 @@ void GetListOfObject(JSONWrapper::Object& Root, std::string RootDir, std::list<N
          if(!it->second)printf("   %s\n", it->first.c_str());
       }
 
-      //for(std::list<NameAndType>::iterator it= histlist.begin(); it!= histlist.end(); it++){printf("%s\n",it->name.c_str()); }
+      for(std::list<NameAndType>::iterator it= histlist.begin(); it!= histlist.end(); it++){printf("%s\n",it->name.c_str()); }
       return;
    }
 

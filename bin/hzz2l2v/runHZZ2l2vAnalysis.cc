@@ -1446,6 +1446,8 @@ int main(int argc, char* argv[])
 	      chWeight *= photonWeight;
 	      iboson   = gammaWgtHandler->getMassiveP4(iboson,tags_full);
 	    }
+          
+          //if(tags_full.Contains("emu")){ std::cout << "Emu events: " << tags_full << std::endl; }
 	  
 	  //updet the transverse mass
 	  float mt =higgs::utils::transverseMass(iboson,zvv,true);
@@ -1464,7 +1466,9 @@ int main(int argc, char* argv[])
 		    if(lShapeWeights[0]==0) nrweight=0;
 		    else                    nrweight/=lShapeWeights[0];
 		  }
-		
+	
+                if(tags_full.Contains("emu")){ std::cout << "Emu events: " << tags_full << std::endl; }
+	
 		if(passPreselection && ivar==0 && nri==0                                    )   mon.fillHisto("metcount", tags_full, index, nrweight);
 		if(passPreselection                                                         )   mon.fillHisto(TString("mt_shapes")+NRsuffix[nri]+varNames[ivar],tags_full,index, mt,nrweight);
 		if(passPreselection                                                         )   mon.fillHisto(TString("met_shapes")+NRsuffix[nri]+varNames[ivar],tags_full,index, zvv.pt(),nrweight);

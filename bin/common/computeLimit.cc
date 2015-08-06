@@ -1642,7 +1642,10 @@ void initializeTGraph(){
                     chNRB->second.bin     = chData->second.bin;
                     chNRB->second.channel = chData->second.channel;
                  }
-
+   
+                 std::cout << "chData->first: " << chData->first << std::endl;
+                 std::cout << "(ctrlCh+chData->second.bin.c_str()).Data() => " << (ctrlCh+chData->second.bin.c_str()).Data() << std::endl;
+                 std::cout << "sideBandHisto.Data() => " << sideBandHisto.Data() << std::endl;
                  //load data histogram in the control channel
                  TH1* hCtrl_SB = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[sideBandHisto.Data()].histo();
                  TH1* hCtrl_SI = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[mainHisto    .Data()].histo();
@@ -1652,6 +1655,15 @@ void initializeTGraph(){
                  //compute alpha
                  double alpha=0 ,alpha_err=0;
                  double alphaUsed=0 ,alphaUsed_err=0;
+                 if(hCtrl_SB->GetBinContent(5) == 0 ){ std::cout << "hCtrl_SB->GetBinContent(5) is zero!" << std::endl; }
+                 if(chData->second.channel.find("ee"  )==0 ){ std::cout << "chData->second.channel.find(ee)==0" << std::endl;} 
+                 if(chData->second.channel.find("mumu")==0 ){ std::cout << "chData->second.channel.find(mumu)==0" << std::endl;}
+                 std::cout << " " << std::endl;
+                 std::cout << "hCtrl_SB->GetBinContent(*)" << std::endl;
+                 std::cout << hCtrl_SB->GetBinContent(0) << "; " << hCtrl_SB->GetBinContent(1) << "; " << hCtrl_SB->GetBinContent(2) << "; " << hCtrl_SB->GetBinContent(3) << "; " << hCtrl_SB->GetBinContent(4) << "; " << hCtrl_SB->GetBinContent(5) << std::endl;
+                 std::cout << "hChan_SB->GetBinContent(*)" << std::endl;
+                 std::cout << hChan_SB->GetBinContent(0) << "; " << hChan_SB->GetBinContent(1) << "; " << hChan_SB->GetBinContent(2) << "; " <<  hChan_SB->GetBinContent(3) << "; " << hChan_SB->GetBinContent(4) << "; " << hChan_SB->GetBinContent(5) << std::endl;
+                 std::cout << " " << std::endl;
                  if(hCtrl_SB->GetBinContent(5)>0){
                     alpha     = hChan_SB->GetBinContent(5) / hCtrl_SB->GetBinContent(5);
                     alpha_err = ( fabs( hChan_SB->GetBinContent(5) * hCtrl_SB->GetBinError(5) ) + fabs(hChan_SB->GetBinError(5) * hCtrl_SB->GetBinContent(5) )  ) / pow(hCtrl_SB->GetBinContent(5), 2);        
