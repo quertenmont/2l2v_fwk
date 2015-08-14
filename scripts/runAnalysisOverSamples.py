@@ -32,8 +32,8 @@ def initProxy():
 
    if(not validCertificate):
       print "You are going to run on a sample over grid using either CRAB or the AAA protocol, it is therefore needed to initialize your grid certificate"
-      if(hostname.find("iihe.ac.be")!=-1): os.system('mkdir -p '+PROXYDIR+'/x509_user_proxy; voms-proxy-init --voms cms:/cms/becms  -valid 192:00 --out '+PROXYDIR+'/x509_proxy')
-      else:                                os.system('mkdir -p '+PROXYDIR+'/x509_user_proxy; voms-proxy-init --voms cms             -valid 192:00 --out '+PROXYDIR+'/x509_proxy')
+      if(hostname.find("iihe.ac.be")!=-1): os.system('mkdir -p '+PROXYDIR+'; voms-proxy-init --voms cms:/cms/becms  -valid 192:00 --out '+PROXYDIR+'/x509_proxy')
+      else:                                os.system('mkdir -p '+PROXYDIR+'; voms-proxy-init --voms cms             -valid 192:00 --out '+PROXYDIR+'/x509_proxy')
    initialCommand = 'export X509_USER_PROXY='+PROXYDIR+'/x509_proxy;voms-proxy-init --noregen; '
 
 
@@ -117,7 +117,7 @@ scriptFile=os.path.expandvars('${CMSSW_BASE}/bin/${SCRAM_ARCH}/wrapLocalAnalysis
 DatasetFileDB                      = opt.db
 
 FarmDirectory                      = opt.outdir+"/FARM"
-PROXYDIR                           = FarmDirectory+"/inputs/" 
+PROXYDIR                           = FarmDirectory+"/inputs/x509_user_proxy/" 
 JobName                            = opt.theExecutable
 LaunchOnCondor.Jobs_RunHere        = 1
 LaunchOnCondor.Jobs_Queue          = opt.queue
