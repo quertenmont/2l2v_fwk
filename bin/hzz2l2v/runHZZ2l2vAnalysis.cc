@@ -1397,27 +1397,32 @@ int main(int argc, char* argv[])
 
              //check b-tag
              if( pt < 30 || fabs(eta) > 2.5 ) continue;
-             if(!isMC) continue;
+
+             bool hasCSVtag ( jets[ijet].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags") > 0.423 );
+
              //if(!varyBtagUp && !varyBtagDown) continue;
-             int flavId=jets[ijet].partonFlavour();
-             bool hasCSVtag (jets[ijet].bDiscriminator("pfCombinedInclusiveSecondaryVertexV2BJetTags")>0.423);
+             if( isMC ){
 
-             if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb,beff);
-             else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5,beff);
-             else		            btsfutil.modifyBTagsWithSF(hasCSVtag,sfl,leff);
+                int flavId=jets[ijet].partonFlavour();
+                if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb,beff);
+                else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5,beff);
+                else		            btsfutil.modifyBTagsWithSF(hasCSVtag,sfl,leff);
 
-             /*if(varyBtagUp) {
-               if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb+sfbunc,beff);
-               else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5+2*sfbunc,beff);
-               else		      btsfutil.modifyBTagsWithSF(hasCSVtag,sfl+sflunc,leff);
+                /*if(varyBtagUp) {
+                      if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb+sfbunc,beff);
+                      else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5+2*sfbunc,beff);
+                      else		      btsfutil.modifyBTagsWithSF(hasCSVtag,sfl+sflunc,leff);
+                  }
+                  else if(varyBtagDown) {
+                      if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb-sfbunc,beff);
+                      else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5-2*sfbunc,beff);
+                      else        	      btsfutil.modifyBTagsWithSF(hasCSVtag,sfl-sflunc,leff);
+               }*/
+
              }
-             else if(varyBtagDown) {
-               if(abs(flavId)==5)        btsfutil.modifyBTagsWithSF(hasCSVtag,sfb-sfbunc,beff);
-               else if(abs(flavId)==4)   btsfutil.modifyBTagsWithSF(hasCSVtag,sfb/5-2*sfbunc,beff);
-               else		      btsfutil.modifyBTagsWithSF(hasCSVtag,sfl-sflunc,leff);
-             }*/
 
-             if(hasCSVtag) nbtagsjets++;
+             if( hasCSVtag ) { nbtagsjets++; }
+
            }
 
            bool passLocalBveto( nbtagsjets == 0 );	
@@ -1428,11 +1433,11 @@ int main(int argc, char* argv[])
          
            //re-assign the event category to take migrations into account
            TString evCat  = eventCategoryInst.GetCategory(tightVarJets,boson);
-           //TString evCat  = eventCategoryInst.GetCategory(selJets,boson);
            
            for(size_t ich=0; ich<chTags.size(); ich++){
 
-             TString tags_full=chTags[ich]+evCat;
+             TString tags_full=chTags[ich];
+             //TString tags_full=chTags[ich]+evCat;
              float chWeight(iweight);
 
              //update weight and mass for photons
