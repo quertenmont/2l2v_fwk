@@ -444,7 +444,7 @@ int main(int argc, char* argv[])
   if(histo.IsNull())    { printf("No Histogram provided\nrun with '--help' for more details\n"); return -1; }
   if(mass==-1)          { printf("No massPoint provided\nrun with '--help' for more details\n"); return -1; }
   if(indexcutV.size()<=0){printf("INDEX CUT SIZE IS NULL\n"); printHelp(); return -1; }
-  if(AnalysisBins.size()==0)AnalysisBins.push_back("all");
+  if(AnalysisBins.size()==0)AnalysisBins.push_back("");
   if(Channels.size()==0){Channels.push_back("ee");Channels.push_back("mumu");}
 
   //make sure that the index vector are well filled
@@ -540,7 +540,7 @@ int main(int argc, char* argv[])
 
   //remove the non-resonant background from data
   if(subNRB){
-  pFile = fopen("NonResonnant.tex","w");
+  pFile = fopen("NonResonnant.tex","w"); 
   allInfo.doBackgroundSubtraction(pFile, selCh,"emu",histo,histo+"_NRBctrl");
   fclose(pFile);
   }
@@ -1650,18 +1650,22 @@ void initializeTGraph(){
                  if(std::find(selCh.begin(), selCh.end(), chData->second.channel)==selCh.end())continue;
 
                  std::map<string, ChannelInfo_t>::iterator chNRB  = procInfo_NRB.channels.find(chData->first);  
-                 if(chNRB==procInfo_NRB.channels.end()){  //this channel does not exist, create it
+                 if(chNRB==procInfo_NRB.channels.end()){  
+                    
                     procInfo_NRB.channels[chData->first] = ChannelInfo_t();     
                     chNRB                = procInfo_NRB.channels.find(chData->first);
                     chNRB->second.bin     = chData->second.bin;
                     chNRB->second.channel = chData->second.channel;
                  }
 
+   
+                 
                  //load data histogram in the control channel
                  TH1* hCtrl_SB = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[sideBandHisto.Data()].histo();
                  TH1* hCtrl_SI = dataProcIt->second.channels[(ctrlCh+chData->second.bin.c_str()).Data()].shapes[mainHisto    .Data()].histo();
                  TH1* hChan_SB =                    chData->second                                      .shapes[sideBandHisto.Data()].histo();
                  TH1* hNRB     =                    chNRB ->second                                      .shapes[mainHisto    .Data()].histo();
+
 
                  //compute alpha
                  double alpha=0 ,alpha_err=0;
@@ -1670,12 +1674,13 @@ void initializeTGraph(){
                     alpha     = hChan_SB->GetBinContent(5) / hCtrl_SB->GetBinContent(5);
                     alpha_err = ( fabs( hChan_SB->GetBinContent(5) * hCtrl_SB->GetBinError(5) ) + fabs(hChan_SB->GetBinError(5) * hCtrl_SB->GetBinContent(5) )  ) / pow(hCtrl_SB->GetBinContent(5), 2);        
                  }
-//                 if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.44; alphaUsed_err=0.03;}
-//                 if(chData->second.channel.find("mumu")==0){alphaUsed = 0.71; alphaUsed_err=0.04;}
-                 if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.47; alphaUsed_err=0.03;} //25/01/2014
-                 if(chData->second.channel.find("mumu")==0){alphaUsed = 0.61; alphaUsed_err=0.04;}
 
+                 //if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.47; alphaUsed_err=0.03;} //25/01/2014
+                 //if(chData->second.channel.find("mumu")==0){alphaUsed = 0.61; alphaUsed_err=0.04;}
 
+                 if(chData->second.channel.find("ee"  )==0){alphaUsed = 0.51; alphaUsed_err=0.1;} //01/11/2015 Using data (Run B-C-D)
+                 if(chData->second.channel.find("mumu")==0){alphaUsed = 0.9; alphaUsed_err=0.1;}
+		
                  double valDD, valDD_err;
                  double valMC, valMC_err;
                  valMC = hNRB->IntegralAndError(1,hNRB->GetXaxis()->GetNbins(),valMC_err);  if(valMC<1E-6){valMC=0.0; valMC_err=0.0;}
