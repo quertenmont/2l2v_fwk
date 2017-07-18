@@ -10,10 +10,12 @@
 <use name="DataFormats/BeamSpot"/>
 <use name="DataFormats/EgammaCandidates"/>
 <use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/HepMCCandidate"/>
 <use name="SimDataFormats/GeneratorProducts"/>
 <use name="CondFormats/JetMETObjects"/>
 <use name="RecoEcal/EgammaCoreTools"/>
 <use name="RecoEgamma/EgammaTools"/>
+<use name="RecoEgamma/ElectronIdentification"/>
 <use name="PhysicsTools/UtilAlgos"/>
 <use name="PhysicsTools/Utilities"/>
 <use name="roottmva"/>
@@ -22,6 +24,7 @@
 <use name="fastjet"/>
 <use name="roostats"/>
 <use name="HiggsAnalysis/CombinedLimit"/>
+<use name="ZZMatrixElement/MELA"/>
 <export>
   <lib name="1"/>
 </export>

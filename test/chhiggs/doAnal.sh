@@ -3,10 +3,10 @@
 #JSONFILE=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/xsec_samples.json
 JSONFILE=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/ttbar_samples.json
 
-#OUTDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/chhiggs/results_ttbar/
-OUTDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/chhiggs/results_ttbar_alt/
+OUTDIR=$CMSSW_BASE/src/UserCode/llvv_fwk/test/chhiggs/results_ttbar/
 
 QUEUE="1nh"
+#QUEUE="criminal"
 #QUEUE="8nm"
 #QUEUE="crab"
 
@@ -24,26 +24,43 @@ if [ "${1}" = "submit" ]; then
         JSONFILE=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/ttbar_samples.json
     elif [ "${2}" = "chhiggs" ]; then
         JSONFILE=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/chhiggs_samples.json
+    elif [ "${2}" = "ntuplizer" ]; then
+        JSONFILE=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/xsec_samples.json
+    fi
+
+    RESUBMIT=""
+    if [ "${3}" = "resubmit" ]; then
+        RESUBMIT=" -F "
     fi
     
-    runAnalysisOverSamples.py -e runChHiggsAnalysis -j ${JSONFILE} -o ${OUTDIR} -d  /dummy/ -c $CMSSW_BASE/src/UserCode/llvv_fwk/test/runAnalysis_cfg.py.templ -p "@useMVA=False @saveSummaryTree=False @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" -s ${QUEUE}
-
+    runAnalysisOverSamples.py -e runChHiggsAnalysis -j ${JSONFILE} -o ${OUTDIR} -d  /dummy/ -c $CMSSW_BASE/src/UserCode/llvv_fwk/test/runAnalysis_cfg.py.templ -p "@useMVA=False @saveSummaryTree=False @runSystematics=False @automaticSwitch=False @is2011=False @jacknife=0 @jacks=0" ${RESUBMIT} -f 8 --NFile 2 -s ${QUEUE}
+    
+    
 elif [ "${1}" = "lumi" ]; then 
     rm myjson.json
+    # Normtag from: /afs/cern.ch/user/l/lumipro/public/normtag_file/moriond16_normtag.json
+    NORMTAG="/afs/cern.ch/user/l/lumipro/public/normtag_file/moriond16_normtag.json"
     #cat ${OUTDIR}/*SingleMuon*.json > myjson.json
-    cat ${OUTDIR}/Data13TeV_SingleMuon2015CPromptReco*.json > myjson.json
-
+    cat ${OUTDIR}/Data13TeV_SingleMuon2015D_*.json > myjson.json
+    STARTINGJSON="data/chhiggs/Cert_246908-258750_13TeV_PromptReco_Collisions15_25ns_JSON.txt"
+    #STARTINGJSON="data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt"
+    STARTINGJSON="data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt"
     sed -i -e "s#}{#, #g" myjson.json; 
     sed -i -e "s#, ,#, #g" myjson.json;
     echo "myjson.json has been recreated and the additional \"}{\" have been fixed."
     echo "Now running brilcalc according to the luminosity group recommendation:"
-    echo "brilcalc lumi -i myjson.json -n 0.962"
+    echo "brilcalc lumi --normtag /afs/cern.ch/user/c/cmsbril/public/normtag_json/OfflineNormtagV1.json -i myjson.json"
     export PATH=$HOME/.local/bin:/opt/brilconda/bin:$PATH    
-    brilcalc lumi -i myjson.json -n 0.962
+    brilcalc lumi --normtag ${NORMTAG} -i myjson.json
     echo "To be compared with the output of the full json:"
-    echo "brilcalc lumi -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt -n 0.962"
-    brilcalc lumi -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt -n 0.962
-    
+    echo "brilcalc lumi --normtag ${STARTINGJSON}"
+    #brilcalc lumi -i /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt -n 0.962
+    brilcalc lumi --normtag ${NORMTAG} -i ${STARTINGJSON}
+elif [ "${1}" = "pileup" ]; then
+    echo "Computing pileup:"
+    echo "pileupCalc.py -i data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/PileUp/pileup_latest.txt --calcMode true --minBiasXsec 69000 --maxPileupBin 50 --numPileupBins 50 MyDataPileupHistogram.root"
+    pileupCalc.py -i data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/PileUp/pileup_latest.txt --calcMode true --minBiasXsec 69000 --maxPileupBin 50 --numPileupBins 50 MyDataPileupHistogram.root
+
 elif [ "${1}" = "plot" ]; then 
 
     BASEDIR=~/www/13TeV_xsec_plots/
@@ -62,12 +79,15 @@ elif [ "${1}" = "plot" ]; then
     if [ "${2}" = "all" ]; then 
         ONLYDILEPTON=" --onlyStartWith ee --onlyStartWith mumu --onlyStartWith emu "
         ONLYLEPTAU=" --onlyStartWith singlemu --onlyStartWith singlee "
+        JSONFILEDILEPTON=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/plot_chhiggs_dileptons.json
+        JSONFILELEPTAU=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/plot_chhiggs_leptontau.json
+
     elif [ "${2}" = "evtflows" ]; then
-        ONLYDILEPTON=" --onlyStartWith ee_eventflow --onlyStartWith emu_eventflow --onlyStartWith mumu_eventflow "
-        ONLYLEPTAU=" --onlyStartWith singlee_eventflow --onlyStartWith singlemu_eventflow "
+        ONLYDILEPTON=" --onlyStartWith ee_xseceventflowdilep --onlyStartWith ee_chhiggseventflowdilep --onlyStartWith emu_xseceventflowdilep --onlyStartWith emu_chhiggseventflowdilep --onlyStartWith mumu_xseceventflowdilep --onlyStartWith mumu_chhiggseventflowdilep  "
+        ONLYLEPTAU=" --onlyStartWith singlee_xseceventflowslep --onlyStartWidh singlee_chhiggseventflowslep --onlyStartWith singlemu_xseceventflowslep --onlyStartWith singlemu_chhiggseventflowslep "
     elif [ "${2}" = "chhiggs" ]; then
-        ONLYDILEPTON=" --onlyStartWith ee_eventflow --onlyStartWith emu_eventflow --onlyStartWith mumu_eventflow "
-        ONLYLEPTAU=" --onlyStartWith singlee_eventflow --onlyStartWith singlemu_eventflow "
+        ONLYDILEPTON=" --onlyStartWith ee_xseceventflowdilep --onlyStartWith ee_chhiggseventflowdilep --onlyStartWith emu_xseceventflowdilep --onlyStartWith emu_chhiggseventflowdilep --onlyStartWith mumu_xseceventflowdilep --onlyStartWith mumu_chhiggseventflowdilep  "
+        ONLYLEPTAU=" --onlyStartWith singlee_xseceventflowslep --onlyStartWidh singlee_chhiggseventflowslep --onlyStartWith singlemu_xseceventflowslep --onlyStartWith singlemu_chhiggseventflowslep "
         
         JSONFILEDILEPTON=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/chhiggs_samples.json
         JSONFILELEPTAU=$CMSSW_BASE/src/UserCode/llvv_fwk/data/chhiggs/chhiggs_samples.json
@@ -83,17 +103,26 @@ elif [ "${1}" = "plot" ]; then
     PSEUDODATA=" "
     
 #for LUMI in 500 1000 5000 10000
-    for LUMI in 16.1
+    for LUMI in 1280
     do
         DIR="${BASEDIR}${LUMI}/"
-        if [ "${2}" = "chhiggs" ]; then
-            DIR="${DIR}/chhiggs/"
-            LUMI=45000
-        fi
+        #if [ "${2}" = "chhiggs" ]; then
+        #    DIR="${DIR}/chhiggs/"
+        #    LUMI=45000
+        #fi
         #LUMI=${3}
         mkdir -p ${DIR}
         cp ~/www/HIG-13-026/index.php ${DIR}
 
+        echo ${LUMI}
+	echo ${INDIR}
+	echo ${DIR}
+	echo ${JSONFILEDILEPTON}
+	echo ${JSONFILELEPTAU}
+	echo ${PSEUDODATA}
+	echo ${ONLYSYSLIST}
+	echo ${ONLYDILEPTON}
+	echo ${ONLYLEPTAU}
         # Dilepton
         runFixedPlotter --iEcm 13 --iLumi ${LUMI} --inDir ${INDIR} --outDir ${DIR} --outFile ${DIR}plotter_dilepton.root  --json ${JSONFILEDILEPTON} --cutflow all_initNorm --no2D --noPowers --plotExt .pdf --plotExt .png --plotExt .C ${PSEUDODATA} --onlyStartWith optim_systs ${ONLYDILEPTON}
         

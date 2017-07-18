@@ -27,104 +27,123 @@ namespace utils
       //return the corrector
       return new FactorizedJetCorrector(corSteps);
     }
+    
+     std::vector<double> smearJER(double pt, double eta, double genPt){
+         std::vector<double> toReturn(3,pt);
+         if(genPt<=0) return toReturn;
+         
+         // FIXME: These are the 8 TeV values.
+         //
+         eta=fabs(eta);
+         double ptSF(1.0), ptSF_err(0.06);
+         if(eta<0.5)                  { ptSF=1.109; ptSF_err=0.008; }
+         else if(eta>=0.5 && eta<0.8) { ptSF=1.138; ptSF_err=0.013; }
+         else if(eta>=0.8 && eta<1.1) { ptSF=1.114; ptSF_err=0.013; }
+         else if(eta>=1.1 && eta<1.3) { ptSF=1.123; ptSF_err=0.024; }
+         else if(eta>=1.3 && eta<1.7) { ptSF=1.084; ptSF_err=0.011; }
+         else if(eta>=1.7 && eta<1.9) { ptSF=1.082; ptSF_err=0.035; }
+         else if(eta>=1.9 && eta<2.1) { ptSF=1.140; ptSF_err=0.047; }
+         else if(eta>=2.1 && eta<2.3) { ptSF=1.067; ptSF_err=0.053; }
+         else if(eta>=2.3 && eta<2.5) { ptSF=1.177; ptSF_err=0.041; }
+         else if(eta>=2.5 && eta<2.8) { ptSF=1.364; ptSF_err=0.039; }
+         else if(eta>=2.8 && eta<3.0) { ptSF=1.857; ptSF_err=0.071; }
+         else if(eta>=3.0 && eta<3.2) { ptSF=1.328; ptSF_err=0.022; }
+         else if(eta>=3.2 && eta<5.0) { ptSF=1.16 ; ptSF_err=0.029; }
+         toReturn[0]=TMath::Max(0.,((genPt+ptSF*(pt-genPt)))/pt);
+         toReturn[1]=TMath::Max(0.,((genPt+(ptSF+ptSF_err)*(pt-genPt)))/pt);
+         toReturn[2]=TMath::Max(0.,((genPt+(ptSF-ptSF_err)*(pt-genPt)))/pt);
+         return toReturn;
+     }
+     
+     //
+     std::vector<float> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc){
+         jecUnc->setJetEta(eta);
+         jecUnc->setJetPt(pt);
+         double relShift=fabs(jecUnc->getUncertainty(true));
+         std::vector<float> toRet;
+         toRet.push_back((1.0+relShift));
+         toRet.push_back((1.0-relShift));
+         return toRet;
+     }
+     
+     void updateJEC(pat::JetCollection& jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, float rho, int nvtx,bool isMC){
+         for(size_t ijet=0; ijet<jets.size(); ijet++){
+             pat::Jet& jet = jets[ijet];
+             
+             //correct JES
+             LorentzVector rawJet = jet.correctedP4("Uncorrected");
 
-//
-//    std::vector<double> smearJER(double pt, double eta, double genPt)
-//    {
-//      std::vector<double> toReturn(3,pt);
-//      if(genPt<=0) return toReturn;
-//      
-//      // FIXME: These are the 8 TeV values.
-//      //
-//      eta=fabs(eta);
-//      double ptSF(1.0), ptSF_err(0.06);
-//      if(eta<0.5)                  { ptSF=1.052; ptSF_err=sqrt(pow(0.012,2)+pow(0.5*(0.062+0.061),2)); }
-//      else if(eta>=0.5 && eta<1.1) { ptSF=1.057; ptSF_err=sqrt(pow(0.012,2)+pow(0.5*(0.056+0.055),2)); }
-//      else if(eta>=1.1 && eta<1.7) { ptSF=1.096; ptSF_err=sqrt(pow(0.017,2)+pow(0.5*(0.063+0.062),2)); }
-//      else if(eta>=1.7 && eta<2.3) { ptSF=1.134; ptSF_err=sqrt(pow(0.035,2)+pow(0.5*(0.087+0.085),2)); }
-//      else if(eta>=2.3 && eta<5.0) { ptSF=1.288; ptSF_err=sqrt(pow(0.127,2)+pow(0.5*(0.155+0.153),2)); }
-//      
-//      toReturn[0]=TMath::Max(0.,(genPt+ptSF*(pt-genPt)));
-//      toReturn[1]=TMath::Max(0.,(genPt+(ptSF+ptSF_err)*(pt-genPt)));
-//      toReturn[2]=TMath::Max(0.,(genPt+(ptSF-ptSF_err)*(pt-genPt)));
-//      return toReturn;
-//    }
-//
-//    //
-//    std::vector<double> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc)
-//    {
-//      jecUnc->setJetEta(eta);
-//      jecUnc->setJetPt(pt);
-//      double relShift=fabs(jecUnc->getUncertainty(true));
-//      std::vector<double> toRet;
-//      toRet.push_back((1.0+relShift)*pt);
-//      toRet.push_back((1.0-relShift)*pt);
-//      return toRet;
-//    }
-//    
-//    void updateJEC(pat::JetCollection &jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, float rho, int nvtx,bool isMC)
-//    {
-//      for(size_t ijet=0; ijet<jets.size(); ijet++)
-//        {
-//          pat::Jet jet = jets[ijet];
-//          
-//          //correct JES
-//          LorentzVector rawJet = jet.correctedP4("Uncorrected");
-//          //double toRawSF=jet.correctedJet("Uncorrected").pt()/jet.pt();
-//          //LorentzVector rawJet(jet*toRawSF);
-//          jesCor->setJetEta(rawJet.eta());
-//          jesCor->setJetPt(rawJet.pt());
-//          jesCor->setJetA(jet.jetAre());
-//          jesCor->setRho(rho);
-//          jesCor->setNPV(nvtx);
-//          double newJECSF=jesCor->getCorrection();
-//          rawJet *= newJECSF;
-//          jet.SetPxPyPzE(rawJet.px(),rawJet.py(),rawJet.pz(),rawJet.energy());
-//
-//          //smear JER
-//          double newJERSF(1.0);
-//          if(isMC)
-//            {
-//              const reco::GenJet &genJet=jet.genJet();
-//              std::vector<double> smearJER=utils::cmssw::smearJER(jet.pt(),jet.eta(),genJet.pt());
-//              newJERSF=smearJER[0]/jet.pt();
-//              rawJet *= newJERSF;
-//              jet.SetPxPyPzE(rawJet.px(),rawJet.py(),rawJet.pz(),rawJet.energy());
-//          
-//              // FIXME: change the way this is stored (to not storing it)
-//              // //set the JER up/down alternatives 
-//              // jets[ijet].setVal("jerup",   smearJER[1] );
-//              // jets[ijet].setVal("jerdown", smearJER[2] );
-//            }
-//      
-//          // FIXME: change the way this is stored (to not storing it)
-//          ////set the JES up/down pT alternatives
-//          //std::vector<float> ptUnc=utils::cmssw::smearJES(jet.pt(),jet.eta(), totalJESUnc);
-//          //jets[ijet].setVal("jesup",    ptUnc[0] );
-//          //jets[ijet].setVal("jesdown",  ptUnc[1] );
-//      
-//          // FIXME: this is not to be re-set. Check that this is a desired non-feature.
-//          // i.e. check that the uncorrectedJet remains the same even when the corrected momentum is changed by this routine. 
-//          //to get the raw jet again
-//          //jets[ijet].setVal("torawsf",1./(newJECSF*newJERSF));  
-//        }
-//    }
-//    
-//    //
-//    std::vector<LorentzVector> getMETvariations(LorentzVector &rawMETP4, pat::JetCollection &jets, std::vector<patUtils::GenericLepton> &leptons,bool isMC)
-//    {
-//      std::vector<LorentzVector> newMetsP4(9,rawMETP4);
-//      if(!isMC) return newMetsP4;
-//      
-//      LorentzVector nullP4(0,0,0,0);
-//      
-//      //recompute the clustered and unclustered fluxes with energy variations
-//      for(size_t ivar=1; ivar<=8; ivar++)
-//        {
-//          
-//          //leptonic flux
-//          LorentzVector leptonFlux(nullP4), lepDiff(nullP4);
-//          for(size_t ilep=0; ilep<leptons.size(); ilep++) {
+             //double toRawSF=jet.correctedJet("Uncorrected").pt()/jet.pt();
+             //LorentzVector rawJet(jet*toRawSF);
+             jesCor->setJetEta(rawJet.eta());
+             jesCor->setJetPt(rawJet.pt());
+             jesCor->setJetA(jet.jetArea());
+             jesCor->setRho(rho);
+             jesCor->setNPV(nvtx);
+             jet.setP4(rawJet*jesCor->getCorrection());
+
+             //smear JER
+             //double newJERSF(1.0);
+             if(isMC){
+                 const reco::GenJet* genJet=jet.genJet();
+                 if(genJet){
+                   double genjetpt( genJet ? genJet->pt(): 0.);                    
+                    std::vector<double> smearJER=utils::cmssw::smearJER(jet.pt(),jet.eta(),genjetpt);
+                    jet.setP4(jet.p4()*smearJER[0]);
+                
+                    //printf("jet pt=%f gen pt = %f smearing %f %f %f\n", jet.pt(), genjetpt, smearJER[0], smearJER[1], smearJER[2]);
+                    // //set the JER up/down alternatives
+										if(smearJER[0]==0) {
+        							jet.addUserFloat("jerup", smearJER[1]);  //kept for backward compatibility
+                    	jet.addUserFloat("jerdown", smearJER[2] ); //kept for backward compatibility
+                    	jet.addUserFloat("_res_jup", smearJER[1]);
+                    	jet.addUserFloat("_res_jdown", smearJER[2] );
+                 		}
+                 		else{
+										  jet.addUserFloat("jerup", smearJER[1]/smearJER[0]);  //kept for backward compatibility 
+										  jet.addUserFloat("jerdown", smearJER[2]/smearJER[0] ); //kept for backward compatibility 
+										  jet.addUserFloat("_res_jup", smearJER[1]/smearJER[0]); 
+										  jet.addUserFloat("_res_jdown", smearJER[2]/smearJER[0] ); 
+                 		}
+                 }else{
+                   jet.addUserFloat("jerup", 1.0); //kept for backward compatibility
+                   jet.addUserFloat("jerdown", 1.0);  //kept for backward compatibility
+                   jet.addUserFloat("_res_jup", 1.0);
+                   jet.addUserFloat("_res_jdown", 1.0 );
+                 }
+             }
+
+             if(isMC){
+               ////set the JES up/down pT alternatives
+               std::vector<float> ptUnc=utils::cmssw::smearJES(jet.pt(),jet.eta(), totalJESUnc);
+               jet.addUserFloat("jesup",    ptUnc[0] );  //kept for backward compatibility
+               jet.addUserFloat("jesdown",  ptUnc[1] );  //kept for backward compatibility
+               jet.addUserFloat("_scale_jup",    ptUnc[0] );
+               jet.addUserFloat("_scale_jdown",  ptUnc[1] );
+             }
+
+             // FIXME: this is not to be re-set. Check that this is a desired non-feature.
+             // i.e. check that the uncorrectedJet remains the same even when the corrected momentum is changed by this routine.
+             //to get the raw jet again
+             //jets[ijet].setVal("torawsf",1./(newJECSF*newJERSF));
+         }
+     }
+
+		 //    //
+		 //    std::vector<LorentzVector> getMETvariations(LorentzVector &rawMETP4, pat::JetCollection &jets, std::vector<patUtils::GenericLepton> &leptons,bool isMC)
+		 //    {
+		 //      std::vector<LorentzVector> newMetsP4(9,rawMETP4);
+		 //      if(!isMC) return newMetsP4;
+		 //      
+		 //      LorentzVector nullP4(0,0,0,0);
+		 //      
+		 //      //recompute the clustered and unclustered fluxes with energy variations
+		 //      for(size_t ivar=1; ivar<=8; ivar++)
+		 //        {
+		 //          
+		 //          //leptonic flux
+		 //          LorentzVector leptonFlux(nullP4), lepDiff(nullP4);
+		 //          for(size_t ilep=0; ilep<leptons.size(); ilep++) {
 //            double varSign( (ivar==LESUP ? 1.0 : (ivar==LESDOWN ? -1.0 : 0.0) ) );
 //            int id( abs(leptons[ilep].get("id")) );
 //            double sf(1.0);
@@ -218,15 +237,23 @@ namespace utils
       //
       eta=fabs(eta);
       double ptSF(1.0), ptSF_err(0.06);
-      if(eta<0.5)                  { ptSF=1.052; ptSF_err=sqrt(pow(0.012,2)+pow(0.5*(0.062+0.061),2)); }
-      else if(eta>=0.5 && eta<1.1) { ptSF=1.057; ptSF_err=sqrt(pow(0.012,2)+pow(0.5*(0.056+0.055),2)); }
-      else if(eta>=1.1 && eta<1.7) { ptSF=1.096; ptSF_err=sqrt(pow(0.017,2)+pow(0.5*(0.063+0.062),2)); }
-      else if(eta>=1.7 && eta<2.3) { ptSF=1.134; ptSF_err=sqrt(pow(0.035,2)+pow(0.5*(0.087+0.085),2)); }
-      else if(eta>=2.3 && eta<5.0) { ptSF=1.288; ptSF_err=sqrt(pow(0.127,2)+pow(0.5*(0.155+0.153),2)); }
-      
-      toReturn[0]=TMath::Max(0.,(genPt+ptSF*(pt-genPt)));
-      toReturn[1]=TMath::Max(0.,(genPt+(ptSF+ptSF_err)*(pt-genPt)));
-      toReturn[2]=TMath::Max(0.,(genPt+(ptSF-ptSF_err)*(pt-genPt)));
+      if(eta<0.5)                  { ptSF=1.109; ptSF_err=0.008; }
+      else if(eta>=0.5 && eta<0.8) { ptSF=1.138; ptSF_err=0.013; }
+      else if(eta>=0.8 && eta<1.1) { ptSF=1.114; ptSF_err=0.013; }
+      else if(eta>=1.1 && eta<1.3) { ptSF=1.123; ptSF_err=0.024; }
+      else if(eta>=1.3 && eta<1.7) { ptSF=1.084; ptSF_err=0.011; }
+      else if(eta>=1.7 && eta<1.9) { ptSF=1.082; ptSF_err=0.035; }
+      else if(eta>=1.9 && eta<2.1) { ptSF=1.140; ptSF_err=0.047; }
+      else if(eta>=2.1 && eta<2.3) { ptSF=1.067; ptSF_err=0.053; }
+      else if(eta>=2.3 && eta<2.5) { ptSF=1.177; ptSF_err=0.041; }
+      else if(eta>=2.5 && eta<2.8) { ptSF=1.364; ptSF_err=0.039; }
+      else if(eta>=2.8 && eta<3.0) { ptSF=1.857; ptSF_err=0.071; }
+      else if(eta>=3.0 && eta<3.2) { ptSF=1.328; ptSF_err=0.022; }
+      else if(eta>=3.2 && eta<5.0) { ptSF=1.16 ; ptSF_err=0.029; } 
+
+      toReturn[0]=TMath::Max(0.,((genPt+ptSF*(pt-genPt)))/pt);
+      toReturn[1]=TMath::Max(0.,((genPt+(ptSF+ptSF_err)*(pt-genPt)))/pt);
+      toReturn[2]=TMath::Max(0.,((genPt+(ptSF-ptSF_err)*(pt-genPt)))/pt);
       return toReturn;
     }
 
@@ -251,14 +278,14 @@ namespace utils
       TH1F *puup=(TH1F *)pu->Clone("puuptmp");
       TH1F *pudown=(TH1F *)pu->Clone("pudowntmp");
       for(size_t i=0; i<Lumi_distr.size(); i++)  pu->SetBinContent(i+1,Lumi_distr[i]);
-      
+
       for(int ibin=1; ibin<=pu->GetXaxis()->GetNbins(); ibin++)
-	{
-	  Double_t xval=pu->GetBinCenter(ibin);
-	  TGraph *gr = new TGraph;
-	  for(int ishift=-3; ishift<3; ishift++)
-	    {
-	      if(ibin+ishift<0) continue;
+			{
+	  		Double_t xval=pu->GetBinCenter(ibin);
+	  		TGraph *gr = new TGraph;
+	  		for(int ishift=-3; ishift<3; ishift++)
+	    	{
+	      	if(ibin+ishift<0) continue;
 	      if(ibin+ishift>pu->GetXaxis()->GetNbins()) continue;
 	      
 	      gr->SetPoint(gr->GetN(),xval+ishift,pu->GetBinContent(ibin+ishift));
@@ -290,61 +317,55 @@ namespace utils
     
 
     //
-    Float_t getEffectiveArea(int id,float eta,int cone,TString isoSum)
+    Float_t getEffectiveArea(int id,float eta,TString isoSum)
     {
       Float_t Aeff(1.0);
-      if(abs(id)==11){ // electron 
-	// PHYS14  https://indico.cern.ch/event/367861/contribution/2/material/slides/0.pdf 
-	if(fabs(eta)<0.8)                         Aeff=(cone==3? 0.1013 : 0.180);
-	else if(fabs(eta)>0.8 && fabs(eta)<1.3)   Aeff=(cone==3? 0.0988 : 0.200);
-	else if(fabs(eta)>1.3 && fabs(eta)<2.0)   Aeff=(cone==3? 0.0572 : 0.150);
-	else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=(cone==3? 0.0842 : 0.190);
-	else if(fabs(eta)>2.2 && fabs(eta)<2.5)   Aeff=(cone==3? 0.1530 : 0.210);
-      }
 
-      else if(abs(id)==13){ // muon 
-	// PHYS14  https://indico.cern.ch/event/367861/contribution/2/material/slides/0.pdf 
-	if(fabs(eta)<0.8)                         Aeff=(cone==3? 0.0913 : 0.180);
-	else if(fabs(eta)>0.8 && fabs(eta)<1.3)   Aeff=(cone==3? 0.0765 : 0.200);
-	else if(fabs(eta)>1.3 && fabs(eta)<2.0)   Aeff=(cone==3? 0.0546 : 0.150);
-	else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=(cone==3? 0.0728 : 0.190);
-	else if(fabs(eta)>2.2 && fabs(eta)<2.5)   Aeff=(cone==3? 0.1177 : 0.210);
-      }
-      
-      else if(abs(id)==22){ // photon 
-	//https://twiki.cern.ch/twiki/bin/viewauth/CMS/CutBasedPhotonIdentificationRun2#Recipe_for_regular_users_for_74X
-	// Effective areas for the PHYS14, conditions: PU20 bx25 
+      if(abs(id)==11){ // electron
+	//Summer16 EA (Recommended for Moriond) : https://indico.cern.ch/event/482673/contributions/2187022/attachments/1282446/1905912/talk_electron_ID_spring16.pdf
+	
+        if(fabs(eta)<1.0)				Aeff=0.1703;
+        else if(fabs(eta)>1.0 && fabs(eta)<1.479)	Aeff=0.1715;
+        else if(fabs(eta)>1.479 && fabs(eta)<2.0)	Aeff=0.1213;
+        else if(fabs(eta)>2.0 && fabs(eta)<2.2)		Aeff=0.1230;
+        else if(fabs(eta)>2.2 && fabs(eta)<2.3)		Aeff=0.1635;
+        else if(fabs(eta)>2.3 && fabs(eta)<2.4)		Aeff=0.1937;
+        else						Aeff=0.2393;
+       }
+
+      else if(abs(id)==22){ // photon
+        // Spring16 EA (Recommended for Moriond) : https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonIdentificationRun2#Selection_implementation_details
+
 	if(isoSum=="chIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.0234;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0189;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0171;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0129;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0110;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0074;
-          else                                      Aeff=0.0035;
+	  if(fabs(eta)<1.0)                         Aeff=0.0360;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0377;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0306;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0283;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0254;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0217;
+          else                                      Aeff=0.0167;
 	}
 	if(isoSum=="nhIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.0053;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0103;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0057;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0070;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0152;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0232;
-          else                                      Aeff=0.1709;
+	  if(fabs(eta)<1.0)                         Aeff=0.0597;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0807;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0629;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0197;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0184;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0284;
+          else                                      Aeff=0.0591;
 	}
 	if(isoSum=="gIso"){
-	  if(fabs(eta)<1.0)                         Aeff=0.0780;
-          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.0629;
-          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0264;
-          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.0462;
-          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.0740;
-          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.0924;
-          else                                      Aeff=0.1484;
+	  if(fabs(eta)<1.0)                         Aeff=0.1210;
+          else if(fabs(eta)>1.0 && fabs(eta)<1.479) Aeff=0.1107;
+          else if(fabs(eta)>1.479 && fabs(eta)<2.0) Aeff=0.0699;
+          else if(fabs(eta)>2.0 && fabs(eta)<2.2)   Aeff=0.1056;
+          else if(fabs(eta)>2.2 && fabs(eta)<2.3)   Aeff=0.1457;
+          else if(fabs(eta)>2.3 && fabs(eta)<2.4)   Aeff=0.1719;
+          else                                      Aeff=0.1998;
 	}
       }
       return Aeff;
-    }
-
+  }
 
 //   double relIso(llvvLepton lep, double rho){
 //      if(abs(lep.id)==11){
@@ -390,13 +411,48 @@ namespace utils
 	if(pt>=90.  && pt<140.)     muontriggerefficiency=0.98187598993908232;
       }
     }
-  
+ 
+//___________________________________Slew Rate Effect in Electron _________________________________
+
+// This effect in energy of electron should considered on the top of scale and smearing in 2016 dataset.
+// It is applied in Barrel Only.
+// https://twiki.cern.ch/twiki/bin/view/CMS/EGMSmearer#ECAL_scale_and_resolution_correc
+
+  void SlewRateCorrection(const fwlite::Event& ev, pat::Electron& ele){
+
+       fwlite::Handle<edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit> > > _ebrechits;
+       _ebrechits.getByLabel(ev,"reducedEgamma","reducedEBRecHits");
+
+        double Ecorr=1;
+        if(fabs(ele.superCluster()->eta())<1.479){
+        DetId detid = ele.superCluster()->seed()->seed();
+        const EcalRecHit * rh = NULL;
+        if (detid.subdetId() == EcalBarrel) {
+           auto rh_i =  _ebrechits->find(detid);
+                      if( rh_i != _ebrechits->end()) rh =  &(*rh_i);
+                      else rh = NULL;
+              }
+      if(rh==NULL) Ecorr=1;
+      else{
+        if(rh->energy() > 200 && rh->energy()<300)  Ecorr=1.0199;
+        else if(rh->energy()>300 && rh->energy()<400) Ecorr=  1.052;
+        else if(rh->energy()>400 && rh->energy()<500) Ecorr = 1.015;
+      }
+        }
+       TLorentzVector p4(ele.px(),ele.py(),ele.pz(),ele.energy());
+       ele.setP4(LorentzVector(p4.Px()*Ecorr,p4.Py()*Ecorr,p4.Pz()*Ecorr,p4.E()*Ecorr ) );
+    }
   }
+
+
   //
-  std::string toLatexRounded(double value, double error, double systError,bool doPowers)
+  std::string toLatexRounded(double value, double error, double systError, bool doPowers, double systErrorDown)
   {
     using namespace std;
 
+    //if systErrorDown is not specified, take sym errors
+    //else do an asym one... except if they are in fact symm
+    if(systError == systErrorDown) systErrorDown = -1;
     bool ValueWasNull = false;
 
     if(value==0.0 && error==0.0)return string("");
@@ -404,11 +460,10 @@ namespace utils
     
     if(!doPowers){
       char tmpchar[255];
-      if(systError<0)
-	sprintf(tmpchar,"$%.0f\\pm%.0f$",value,error);
-      else
-	sprintf(tmpchar,"$%.0f\\pm%.0f\\pm%.0f$",value,error,systError);
-      return string(tmpchar);
+      if(systError<0)	sprintf(tmpchar,"$%.2f\\pm%.2f$",value,error);
+      else if(systErrorDown<0)	sprintf(tmpchar,"$%.2f\\pm%.2f\\pm%.2f$",value,error,systError);
+      else sprintf(tmpchar,"$%.2f\\pm%.2f ^{+%.2f}_{-%.2f}$",value,error,systError, systErrorDown);
+    	return string(tmpchar);
     }
     
     double power = floor(log10(value));
@@ -419,31 +474,54 @@ namespace utils
     value = value / pow(10,power);
     error = error / pow(10,power);
     if(systError>=0)systError = systError / pow(10,power);
+    if(systErrorDown>=0)systErrorDown = systErrorDown / pow(10,power);
     int ValueFloating;
-    if(systError<0){
-      ValueFloating = 1 + std::max(-1*log10(error),0.0);
+    if(error >0){
+      if(systError<0){
+        ValueFloating = 1 + std::max(-1*log10(error),0.0);
+      }else if(systErrorDown<0){
+        ValueFloating = 1 + std::max(-1*log10(systError), std::max(-1*log10(error),0.0));
+      }else{
+        ValueFloating = 1 + std::max(-1*log10(systErrorDown), std::max(-1*log10(systError), std::max(-1*log10(error),0.0)));
+      }
     }else{
-      ValueFloating = 1 + std::max(-1*log10(systError), std::max(-1*log10(error),0.0));
+      if(systErrorDown<0){
+        ValueFloating = 1 + std::max(-1*log10(systError),0.0);
+      }else{
+        ValueFloating = 1 + std::max(-1*log10(systErrorDown), std::max(-1*log10(systError),0.0));
+      }
     }
     int ErrorFloating = ValueFloating;
-    
- 
+
     if(ValueWasNull){value=0.0;}
 
     char tmpchar[255];
-    if(power!=0){
-      if(systError<0){
-        sprintf(tmpchar,"$(%.*f\\pm%.*f)\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,power);
-      }else{
-        sprintf(tmpchar,"$(%.*f\\pm%.*f\\pm%.*f)\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError,power);
-      }
-      
+    if(value<=1E-4){
+        //sum in quadrature errors
+        double erroSum = 0;
+        if(error>0){erroSum+=error*error;}
+        if(systError>0){erroSum+=systError*systError;}
+        if(systErrorDown>0){erroSum+=systErrorDown*systErrorDown;}
+        sprintf(tmpchar,"$<%.*f$",ErrorFloating,sqrt(erroSum)); //In printf, the *f allows you to pass as an argument the width of the float printed (http://www.cplusplus.com/reference/cstdio/printf/)
     }else{
-      if(systError<0){
-        sprintf(tmpchar,"$%.*f\\pm%.*f$",ValueFloating,value,ErrorFloating,error);
-      }else{
-        sprintf(tmpchar,"$%.*f\\pm%.*f\\pm%.*f$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError);
-      }
+       if(power!=0){
+         if(systError<0){
+           sprintf(tmpchar,"$(%.*f\\pm%.*f)\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,power);
+         }else if(systErrorDown<0){
+           sprintf(tmpchar,"$(%.*f\\pm%.*f\\pm%.*f)\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError,power);
+         }else{
+           sprintf(tmpchar,"$(%.*f\\pm%.*f ^{+%.*f}_{-%.*f})\\times 10^{%g}$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError, ErrorFloating,systErrorDown,power);
+         }
+         
+       }else{
+         if(systError<0){
+           sprintf(tmpchar,"$%.*f\\pm%.*f$",ValueFloating,value,ErrorFloating,error);
+         }else if(systErrorDown<0){
+           sprintf(tmpchar,"$%.*f\\pm%.*f\\pm%.*f$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError);
+         }else{
+           sprintf(tmpchar,"$%.*f\\pm%.*f ^{+%.*f}_{-%.*f}$",ValueFloating,value,ErrorFloating,error,ErrorFloating,systError,ErrorFloating,systErrorDown);
+         }
+       }
     }
     return string(tmpchar);
   }
@@ -483,9 +561,9 @@ namespace utils
 	}
 
 
-  int getTotalNumberOfEvents(std::vector<std::string>& urls, bool fast)
+  double getTotalNumberOfEvents(std::vector<std::string>& urls, bool fast, bool weightSum)
   {
-    int toReturn = 0;
+    double toReturn = 0;
     for(unsigned int f=0;f<urls.size();f++){
        TFile* file = TFile::Open(urls[f].c_str() );
        fwlite::Event ev(file);
@@ -494,7 +572,10 @@ namespace utils
              fwlite::Handle< GenEventInfoProduct > genEventInfoHandle;
              genEventInfoHandle.getByLabel(ev, "generator");
              if(!genEventInfoHandle.isValid()){fast=true; break;} //if this object is missing, it's likely missing for the entire sample, move to the fast method
-             if(genEventInfoHandle->weight()<0){toReturn--;}else{toReturn++;}
+             if(weightSum){toReturn+=genEventInfoHandle->weight();
+             }else{                 
+               if(genEventInfoHandle->weight()<0){toReturn--;}else{toReturn++;}
+             }
           }
        }
 
@@ -514,77 +595,69 @@ namespace utils
     for(unsigned int f=0;f<urls.size();f++){
        TFile* file = TFile::Open(urls[f].c_str() );
        fwlite::Event ev(file);
+       unsigned int printflag = 0;
        for(ev.toBegin(); !ev.atEnd(); ++ev){
           fwlite::Handle< std::vector<PileupSummaryInfo> > puInfoH;
-          puInfoH.getByLabel(ev, "addPileupInfo");
+          puInfoH.getByLabel(ev, "slimmedAddPileupInfo");
           if(!puInfoH.isValid()){printf("collection PileupSummaryInfos with name addPileupInfo does not exist\n"); exit(0);}
           unsigned int ngenITpu = 0;
           for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
-             if(it->getBunchCrossing()==0)      { ngenITpu += it->getPU_NumInteractions(); }
+             if(it->getBunchCrossing()==0)      { ngenITpu += it->getTrueNumInteractions(); }
           }
-          if(ngenITpu>=Npu){printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);}
+          if(ngenITpu>=Npu){printflag++; if(printflag<=1)printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);} 
           mcpileup[ngenITpu]++;
        }
        delete file;
      }
   }
- 
+
+
+  double getMCPileupDistributionAndTotalEventFromMiniAOD(std::vector<std::string>& urls, unsigned int Npu, std::vector<float>& mcpileup)
+  {
+    double toReturn=0;
+    mcpileup.clear();
+    mcpileup.resize(Npu);
+    for(unsigned int f=0;f<urls.size();f++){
+       TFile* file = TFile::Open(urls[f].c_str() );
+       fwlite::Event ev(file);
+       unsigned int printflag = 0;
+       for(ev.toBegin(); !ev.atEnd(); ++ev){
+          fwlite::Handle< GenEventInfoProduct > genEventInfoHandle;
+          genEventInfoHandle.getByLabel(ev, "generator");
+          if(!genEventInfoHandle.isValid()){printf("collection generator is not found\n");} //if this object is missing, it's likely missing for the entire sample, move to the fast method
+          toReturn+=genEventInfoHandle->weight();
+
+
+          fwlite::Handle< std::vector<PileupSummaryInfo> > puInfoH;
+          puInfoH.getByLabel(ev, "slimmedAddPileupInfo");
+          if(!puInfoH.isValid()){printf("collection PileupSummaryInfos with name addPileupInfo does not exist\n"); exit(0);}
+          unsigned int ngenITpu = 0;
+          for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
+             if(it->getBunchCrossing()==0)      { ngenITpu += it->getTrueNumInteractions(); }
+          }
+          if(ngenITpu>=Npu){printflag++; if(printflag<=1)printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);} 
+          mcpileup[ngenITpu]++;
+       }
+       delete file;
+     }
+    return toReturn;
+  }
+
+
   bool isGoodVertex(reco::Vertex& vtx)
   {
-    if(vtx.ndof() <= 4)         return false;
-    if(abs(vtx.z())>24)         return false;
-    if(vtx.position().Rho() >2) return false;
+
+    if(vtx.chi2()==0 && vtx.ndof()==0) return false; // Corresponds to the AOD method vtx->isFake()  
+
+    if(vtx.ndof() < 4)            return false;
+    if(abs(vtx.z())>24.)          return false;
+    if(vtx.position().Rho() >2.0) return false;
     // else
     return true;
   }
   
 
 
-  void getMCPileupDistributionFromMiniAODtemp(std::vector<std::string>& urls, unsigned int Npu, std::vector<float>& mcpileup)
-  {
-    mcpileup.clear();
-    mcpileup.resize(Npu);
-    for(unsigned int f=0;f<urls.size();f++){
-       TFile* file = TFile::Open(urls[f].c_str() );
-       fwlite::Event ev(file);
-       for(ev.toBegin(); !ev.atEnd(); ++ev){
-         reco::VertexCollection vtx;
-         fwlite::Handle < reco::VertexCollection > vtxHandle;
-         vtxHandle.getByLabel (ev, "offlineSlimmedPrimaryVertices");
-         if (vtxHandle.isValid() ) vtx = *vtxHandle;
-
-         unsigned int ngenITpu = vtx.size();
-          //for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
-          //   if(it->getBunchCrossing()==0)      { ngenITpu += it->getPU_NumInteractions(); }
-          //}
-          if(ngenITpu>=Npu){printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!"); mcpileup.resize(ngenITpu+1);}
-          mcpileup[ngenITpu]++;
-       }
-       delete file;
-     }
-  }
- 
-  //This function will be removed soon as it is not behaving properly with xrootd
-  void getMCPileupDistributionFromMiniAOD(fwlite::ChainEvent& ev, unsigned int Npu, std::vector<float>& mcpileup)
-  {
-    #warning THE FOLLOWING FUNCTION WILL BE REMOVED SOON: void getMCPileupDistributionFromMiniAOD(fwlite::ChainEvent& ev   , unsigned int Npu, std::vector<float>& mcpileup)',\n IF YOU USE IT REPLACE IT BY THIS ONE :DEPRECATED METHOD USED by 'void getMCPileupDistributionFromMiniAOD(std::vector<string>& urls, unsigned int Npu, std::vector<float>& mcpileup)'
-    mcpileup.clear();
-    mcpileup.resize(Npu);
-    for(Long64_t ientry=0;ientry<ev.size();ientry++){
-      ev.to(ientry);
-      
-      fwlite::Handle< std::vector<PileupSummaryInfo> > puInfoH;
-      puInfoH.getByLabel(ev, "addPileupInfo");
-      if(!puInfoH.isValid()){printf("collection PileupSummaryInfos with name addPileupInfo does not exist\n"); exit(0);}
-      unsigned int ngenITpu = 0;
-      for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
-         if(it->getBunchCrossing()==0)      { ngenITpu += it->getPU_NumInteractions(); }
-      }
-      if(ngenITpu>=Npu){printf("ngenITpu is larger than vector size... vector is being resized, but you should check that all is ok!\n"); mcpileup.resize(ngenITpu+1);}
-      mcpileup[ngenITpu]++;
-    }
-  }
-  
   void getPileupNormalization(std::vector<float>& mcpileup, double* PUNorm, edm::LumiReWeighting* LumiWeights, utils::cmssw::PuShifter_t PuShifters){
     PUNorm[0]=0; PUNorm[1]=0; PUNorm[2]=0;
     double NEvents=0;
@@ -643,5 +716,27 @@ namespace utils
   }
   
   
-  
+   void getHiggsLineshapeFromMiniAOD(std::vector<std::string>& urls, TH1D* hGen){
+      if(!hGen)return;
+      hGen->Reset();
+      for(unsigned int f=0;f<urls.size();f++){
+       TFile* file = TFile::Open(urls[f].c_str() );
+       fwlite::Event ev(file);
+       for(ev.toBegin(); !ev.atEnd(); ++ev){
+          reco::GenParticleCollection gen;
+          fwlite::Handle< reco::GenParticleCollection > genHandle;
+          genHandle.getByLabel(ev, "prunedGenParticles");
+          if(genHandle.isValid()){ gen = *genHandle;}
+
+          LorentzVector higgs(0,0,0,0);
+	  for(size_t igen=0; igen<gen.size(); igen++){
+	     if(!gen[igen].isHardProcess()) continue;
+	     if(abs(gen[igen].pdgId())>=11 && abs(gen[igen].pdgId())<=16){ higgs += gen[igen].p4(); }
+	  }         
+          hGen->Fill(higgs.mass());
+       }
+       delete file;
+     }
+  }
+ 
 }

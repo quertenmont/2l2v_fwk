@@ -153,10 +153,7 @@ int main(int argc, char* argv[])
   JetCorrectionUncertainty *totalJESUnc = new JetCorrectionUncertainty((jecDir+"/MC_Uncertainty_AK5PFchs.txt").Data());
   
   //muon energy scale and uncertainties
-  MuScleFitCorrector *muCor=getMuonCorrector(jecDir,dtag);
-
-  //lepton efficiencies
-  LeptonEfficiencySF lepEff;
+  //MuScleFitCorrector *muCor=getMuonCorrector(jecDir,dtag);
 
   //pileup weighting
   edm::LumiReWeighting* LumiWeights = NULL;
@@ -167,7 +164,7 @@ int main(int argc, char* argv[])
           std::vector<float> dataPileupDistribution; for(unsigned int i=0;i<dataPileupDistributionDouble.size();i++){dataPileupDistribution.push_back(dataPileupDistributionDouble[i]);}
           std::vector<float> mcPileupDistribution;
           //utils::getMCPileupDistributionFromMiniAOD(urls,dataPileupDistribution.size(), mcPileupDistribution);
-          utils::getMCPileupDistributionFromMiniAODtemp(urls,dataPileupDistribution.size(), mcPileupDistribution);
+          utils::getMCPileupDistributionFromMiniAOD(urls,dataPileupDistribution.size(), mcPileupDistribution);
           while(mcPileupDistribution.size()<dataPileupDistribution.size())  mcPileupDistribution.push_back(0.0);
           while(mcPileupDistribution.size()>dataPileupDistribution.size())dataPileupDistribution.push_back(0.0);
           gROOT->cd();  //THIS LINE IS NEEDED TO MAKE SURE THAT HISTOGRAM INTERNALLY PRODUCED IN LumiReWeighting ARE NOT DESTROYED WHEN CLOSING THE FILE
@@ -349,8 +346,8 @@ int main(int argc, char* argv[])
 
          //Select the Tag muon 
          passKinMu = (ptf > 20);
-         passIdMu  = patUtils::passId(selLeptons[first].mu, vtx[0], patUtils::llvvMuonId::StdTight);      
-         passIsoMu = patUtils::passIso(selLeptons[first].mu,  patUtils::llvvMuonIso::Tight); 
+         passIdMu  = patUtils::passId(selLeptons[first].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::ICHEP16Cut);      
+         passIsoMu = patUtils::passIso(selLeptons[first].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::ICHEP16Cut); 
          if(passIdMu && passKinMu && passIsoMu) Tag = true;
          if(Tag){
            mon.fillHisto("pT",  "Mu_Tag",  ptf, weight);
@@ -359,7 +356,7 @@ int main(int argc, char* argv[])
 
          //Select the Probe Muon
          ProbeMuKin = (pts > 20);
-         ProbeMuIso = patUtils::passIso(selLeptons[second].mu,  patUtils::llvvMuonIso::Tight);
+         ProbeMuIso = patUtils::passIso(selLeptons[second].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::ICHEP16Cut);
          if( ProbeMuKin ) ProbeMu = true;
          if(ProbeMu){
            mon.fillHisto("pT",  "Mu_NoCutProbe",  pts, weight);
@@ -377,10 +374,10 @@ int main(int argc, char* argv[])
          }
          //Select the PassProbe
          if(ZPick){
-           passIdTh = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::StdTight);
-           passIdLo = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::StdLoose);
-           passIdMd = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::StdMedium);
-           passIsoProbeMu = patUtils::passIso(selLeptons[second].mu,  patUtils::llvvMuonIso::Tight);
+           passIdTh = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::Tight, patUtils::CutVersion::ICHEP16Cut);
+           passIdLo = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::Loose, patUtils::CutVersion::ICHEP16Cut);
+           passIdMd = patUtils::passId(selLeptons[second].mu, vtx[0], patUtils::llvvMuonId::Soft, patUtils::CutVersion::ICHEP16Cut);
+           passIsoProbeMu = patUtils::passIso(selLeptons[second].mu,  patUtils::llvvMuonIso::Tight, patUtils::CutVersion::ICHEP16Cut);
            if(passIdTh && passIsoProbeMu) PassProbeTh = true;
            if(passIdLo && passIsoProbeMu) PassProbeLo = true;
            if(passIdMd && passIsoProbeMu) PassProbeMd = true;
@@ -427,8 +424,8 @@ int main(int argc, char* argv[])
          //Selection of the Tag
          passKinEle = (ptf > 20);
          passKinEle = ((abs(etas) >= 0 && abs(etas) <= 1.4442) || (abs(etas) >= 1.5660 && abs(etas) <= 2.5));
-         passIdEle  = patUtils::passId(selLeptons[first].el, vtx[0], patUtils::llvvElecId::Tight);  
-         passIsoEle = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight);
+         passIdEle  = patUtils::passId(selLeptons[first].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::ICHEP16Cut);  
+         passIsoEle = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::ICHEP16Cut, 0.);
          if(passKinEle && passIdEle && passIsoEle) TagEle = true; 
          if(TagEle) {
            mon.fillHisto("passTag", "Ele",    1,     1.); 
@@ -439,7 +436,7 @@ int main(int argc, char* argv[])
          //Selection of the Probe
          ProbeEleKin = (pts > 20);
          ProbeEleEta = ((abs(etas) >= 0 && abs(etas) <= 1.4442) || (abs(etas) >= 1.5660 && abs(etas) <= 2.5));
-         ProbeEleIso = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight);
+         ProbeEleIso = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::ICHEP16Cut, 0.);
          if( ProbeEleKin && ProbeEleEta ) ProbeEle = true; 
          if(ProbeEle){
            mon.fillHisto("pT",  "Ele_NoCutProbe",  pts, weight);
@@ -458,10 +455,10 @@ int main(int argc, char* argv[])
 
          //Counting the Passing Prob
          if(ZPick){
-           passIdEleTh = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Tight);
-           passIdEleMd = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Medium);
-           passIdEleLo = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Loose);
-           passIsoProbeEle = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight);
+           passIdEleTh = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Tight, patUtils::CutVersion::ICHEP16Cut);
+           passIdEleMd = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Medium, patUtils::CutVersion::ICHEP16Cut);
+           passIdEleLo = patUtils::passId(selLeptons[second].el, vtx[0], patUtils::llvvElecId::Loose, patUtils::CutVersion::ICHEP16Cut);
+           passIsoProbeEle = patUtils::passIso(selLeptons[first].el,  patUtils::llvvElecIso::Tight, patUtils::CutVersion::ICHEP16Cut, 0.);
            if(passIdEleTh && passIsoProbeEle) PassProbeEleTh = true;
            if(passIdEleLo && passIsoProbeEle) PassProbeEleLo = true;
            if(passIdEleMd && passIsoProbeEle) PassProbeEleMd = true;

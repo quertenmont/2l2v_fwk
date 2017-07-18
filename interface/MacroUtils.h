@@ -43,8 +43,19 @@
 
 #include "UserCode/llvv_fwk/interface/PatUtils.h"
 
+//------------------ needed headers for slew rate corrections -------------------//
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
 
-
+#include <istream>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <map>
 #include <vector>
 #include "TVector3.h"
 #include "TMath.h"
@@ -125,8 +136,7 @@ namespace utils
     typedef std::vector<TGraph *> PuShifter_t;
     enum PuShifterTypes {PUDOWN,PUUP};
     utils::cmssw::PuShifter_t getPUshifters(std::vector< float > &Lumi_distr, float puUnc);
-
-    Float_t getEffectiveArea(int id, float eta,int cone=3,TString isoSum="");
+    Float_t getEffectiveArea(int id, float eta,TString isoSum="");
 //    double relIso(llvvLepton lep, double rho);
 
     // Single muon trigger efficiency 
@@ -138,12 +148,15 @@ namespace utils
 
 
     // JES/JER Smearing
-//    std::vector<double> smearJER(double pt, double eta, double genPt);
-//    std::vector<double> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc);
+      std::vector<double> smearJER(double pt, double eta, double genPt);
+      std::vector<float> smearJES(double pt, double eta, JetCorrectionUncertainty *jecUnc);
+   
 //    
 //    //set new jet energy corrections
-//    void updateJEC(pat::JetCollection &jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, double rho, int nvtx,bool isMC);
-//    
+     void updateJEC(pat::JetCollection& jets, FactorizedJetCorrector *jesCor, JetCorrectionUncertainty *totalJESUnc, float rho, int nvtx,bool isMC);
+   
+		 void SlewRateCorrection(const fwlite::Event& ev, pat::Electron& ele);  
+ 
 //    //apply MET variations
 //    enum METvariations { NOMINAL, JERUP, JERDOWN, JESUP, JESDOWN, UMETUP, UMETDOWN, LESUP, LESDOWN };
 //    std::vector<LorentzVector> getMETvariations(LorentzVector &rawMETP4, pat::JetCollection &jets, std::vector<patUtils::GenericLepton> &leptons, bool isMC);
@@ -152,7 +165,7 @@ namespace utils
   
 
   //round up and show in TeX
-  std::string toLatexRounded(double value, double error, double systError=-1,bool doPowers=true);
+  std::string toLatexRounded(double value, double error, double systError=-1,bool doPowers=true, double systErrorDown = -1);
 
   //clean up ROOT version of TeX
   void TLatexToTex(TString &expr);
@@ -168,9 +181,10 @@ namespace utils
 
   // loop on all the lumi blocks for an EDM file in order to count the number of events that are in a sample
   // this is useful to determine how to normalize the events (compute weight)
-  int getTotalNumberOfEvents(std::vector<std::string>& urls, bool fast=false);
+  double getTotalNumberOfEvents(std::vector<std::string>& urls, bool fast=false, bool weightSum=false);
 
   unsigned long getMergeableCounterValue(const std::vector<std::string>& urls, std::string counter);
+  double getMCPileupDistributionAndTotalEventFromMiniAOD(std::vector<std::string>& urls, unsigned int Npu, std::vector<float>& mcpileup);
   void getMCPileupDistributionFromMiniAOD(std::vector<std::string>& urls, unsigned int Npu, std::vector<float>& mcpileup);
   bool isGoodVertex(reco::Vertex& vtx);
   void getMCPileupDistributionFromMiniAODtemp(std::vector<std::string>& urls, unsigned int Npu, std::vector<float>& mcpileup);
@@ -182,6 +196,8 @@ namespace utils
   bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern);
   bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::string pattern1, std::string pattern2, std::string pattern3="", std::string pattern4="");
   bool passTriggerPatterns(edm::TriggerResultsByName& tr, std::vector<std::string>& patterns);
+
+  void getHiggsLineshapeFromMiniAOD(std::vector<std::string>& urls, TH1D* hGen);
 
   inline bool sort_CandidatesByPt(const pat::GenericParticle &a, const pat::GenericParticle &b)  { return a.pt()>b.pt(); }
 }
@@ -218,5 +234,6 @@ class DuplicatesChecker{
     return true;
   }
 };
+
 
 #endif
